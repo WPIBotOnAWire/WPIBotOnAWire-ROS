@@ -1,0 +1,33 @@
+services:
+  ros-runner:
+    build:
+      context: .
+      args:
+        USER_ID: "${UID}"
+        GROUP_ID: "${GID}"
+    volumes:
+      - ~/catkin_ws:/home/ros_runner/catkin_ws
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    command: bash -c "source /opt/ros/noetic/setup.sh && cd /home/ros_runner/catkin_ws && catkin_make && ./runall.sh"
+  ros-builder:
+    build:
+      context: .
+      args:
+        USER_ID: "${UID}"
+        GROUP_ID: "${GID}"
+    volumes: 
+      - ~/catkin_ws:/home/ros_runner/catkin_ws
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    command: bash -c "source /opt/ros/noetic/setup.sh && cd /home/ros_runner/catkin_ws && catkin_make"
+  ros:
+    build:
+      context: .
+      args:
+        USER_ID: "${UID}"
+        GROUP_ID: "${GID}"
+    volumes: 
+      - ~/catkin_ws:/home/ros_runner/catkin_ws
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"

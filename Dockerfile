@@ -8,7 +8,7 @@ RUN adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID ros_ru
 
 RUN apt-get update
 RUN apt-get install ros-noetic-mavros ros-noetic-mavros-extras ros-noetic-rosserial python3-pip -y
-RUN pip3 install flask requests pyserial
+RUN pip3 install flask requests pyserial pynmeagps
 EXPOSE 8080:8080
 
 USER ros_runner

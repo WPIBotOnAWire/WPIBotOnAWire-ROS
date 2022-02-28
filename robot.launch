@@ -1,0 +1,4 @@
+<launch>
+  <node name="serial_node" pkg="rosserial_python" type="serial_node.py"/>
+  <node name="talker_node" pkg="hello_world" type="talker" output="screen"/>
+</launch>

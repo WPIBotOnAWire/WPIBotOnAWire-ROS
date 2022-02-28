@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-from ctypes import LibraryLoader
-from genericpath import exists
-from logging import fatal
 import threading
 import rospy
 import socket
@@ -10,6 +7,7 @@ import struct
 import json
 from os import path
 from std_msgs import msg
+from gps_common.msg import GPSFix, GPSStatus
 
 # Packet format:
 # /------------------------------------------------------------\
@@ -22,7 +20,7 @@ from std_msgs import msg
 heartbeat_timer = 2
 id = b''
 
-home_server_host = "172.17.0.1"
+home_server_host = "localhost"
 home_server_port = 5555
 
 class Packet:
@@ -75,6 +73,17 @@ def recv(s: socket.socket) -> Packet:
 
     return pack
 
+def gps_cb(d: GPSFix):
+    data = {
+        "lat": d.latitude,
+        "lon": d.longitude,
+        "alt": d.altitude,
+        "spd": d.speed
+    }
+
+    p = Packet(2, bytes(json.dumps(data), 'UTF-8'))
+    send_packet(s, p)
+
 def listener(s: socket.socket):
     global id
 
@@ -99,6 +108,7 @@ if __name__ == "__main__":
     print("Starting Server Node...")
 
     motor_pub = rospy.Publisher("/motor_speed", msg.Int32, queue_size=10)
+    gps_sub = rospy.Subscriber("/gps_pub", GPSFix, callback=gps_cb)
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((home_server_host, home_server_port))

@@ -1,6 +1,6 @@
 #! /bin/bash
 
-dockerfile="$HOME/catkin_ws/src/WPIBotOnAWire/"
+dockerfile="$HOME/catkin_ws/src/WPIBotOnAWire-ROS/"
 
 function bow-start {
     if [ ! -d "$HOME/catkin_ws/devel" ]

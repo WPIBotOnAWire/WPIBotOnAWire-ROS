@@ -1,6 +1,6 @@
 #! /bin/fish
 
-set dockerfile ~/catkin_ws/src/WPIBotOnAWire/
+set dockerfile ~/catkin_ws/src/WPIBotOnAWire-ROS/
 
 function bow-start
     if not test -e ~/catkin_ws/devel

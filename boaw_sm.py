@@ -34,7 +34,7 @@ class Move(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('Executing state MOVE')
-        if self.rfReading <= 0.5    #0.5 meters
+        if self.rfReading <= 0.5:    #0.5 meters
             robot_speed = 0         #stop the robot
             robotSpeedPub.publish(robot_speed)
             return True     #switch to Approach State

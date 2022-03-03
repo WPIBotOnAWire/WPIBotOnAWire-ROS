@@ -11,6 +11,15 @@ rfReadingGlobal = 0
 switchGlobal = 'OFF'
 robotSpeedpub
 
+# Subscribers
+rospy.Subscriber("/rangefinder/front", Float32 , RfCallback)
+rospy.Subscriber("/switch", String , SwitchCallback)
+
+# Publishers
+robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
+flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
+soundPub = rospy.Publisher('/deterrents/speaker', Bool, queue_size=10)
+
 # define state Static
 class Static(smach.State):
     def __init__(self):
@@ -115,17 +124,6 @@ def SwitchCallback(data):
 
 def main():
     rospy.init_node('BOAW_SM')
-
-    # Subscribers
-    rospy.Subscriber("/rangefinder/front", Float32 , RfCallback)
-    # rospy.Subscriber("/rangefinder/back", Float32 , RfCallback)
-
-    # rospy.Subscriber("/switch", String , SwitchCallback)
-
-    # Publishers
-    robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
-    flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
-    soundPub = rospy.Publisher('/deterrents/speaker', Bool, queue_size=10)
 
     # Create a SMACH state machine
     sm = smach.StateMachine(outcomes=[True, False])

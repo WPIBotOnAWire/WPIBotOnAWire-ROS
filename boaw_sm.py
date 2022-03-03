@@ -4,21 +4,12 @@ import roslib
 import rospy
 import smach
 import smach_ros
-from std_msgs.msg import Float32, Bool
+from std_msgs.msg import Float32, Bool, String
+import threading
 
 #Global Variables
 rfReadingGlobal = 0
-switchGlobal = 'OFF'
-robotSpeedpub
-
-# Subscribers
-rospy.Subscriber("/rangefinder/front", Float32 , RfCallback)
-rospy.Subscriber("/switch", String , SwitchCallback)
-
-# Publishers
-robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
-flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
-soundPub = rospy.Publisher('/deterrents/speaker', Bool, queue_size=10)
+switchGlobal = 'ON'
 
 # define state Static
 class Static(smach.State):
@@ -122,6 +113,17 @@ def SwitchCallback(data):
     globals()['switchGlobal'] = data
 
 
+
+# Subscribers
+rospy.Subscriber("/rangefinder/front", Float32 , RfCallback)
+rospy.Subscriber("/switch", String , SwitchCallback)
+
+# Publishers
+robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
+flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
+soundPub = rospy.Publisher('/deterrents/speaker', Bool, queue_size=10)
+
+
 def main():
     rospy.init_node('BOAW_SM')
 
@@ -141,9 +143,20 @@ def main():
                                transitions={True :'DETERRENTS_OFF', False: 'DETERRENTS_ON'})
         smach.StateMachine.add('DETERRENTS_OFF', Deterrents_Off(), 
                                transitions={True :'STATIC', False:'STATIC'})
-    # Execute SMACH plan
-    outcome = sm.execute()
 
+    # Create a thread to execute the smach container
+    smach_thread = threading.Thread(target=sm.execute)
+    smach_thread.start()
+
+    # Wait for ctrl-c
+    rospy.spin()
+
+    # Request the container to preempt
+    my_smach_con.request_preempt()
+
+    # Block until everything is preempted
+    # (you could do something more complicated to get the execution outcome if you want it)
+    smach_thread.join()
 
 
 if __name__ == '__main__':

@@ -1,4 +1,6 @@
 <launch>
-  <node name="serial_node" pkg="rosserial_python" type="serial_node.py"/>
-  <node name="talker_node" pkg="hello_world" type="talker" output="screen"/>
+  <node name="serial_node" pkg="rosserial_python" type="serial_node.py">
+    <param name="port" value="/dev/ttyACM1"/>
+  </node>
+  <node name="sound_node" pkg="sound_node" type="play.py"/>
 </launch>

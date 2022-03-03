@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
-import roslib; roslib.load_manifest('smach_tutorials')
+import roslib
 import rospy
 import smach
 import smach_ros
+from std_msgs.msg import Float32, Bool
 
 #Global Variables
 rfReadingGlobal = 0
 switchGlobal = 'OFF'
+robotSpeedpub
 
 # define state Static
 class Static(smach.State):
@@ -42,7 +44,6 @@ class Move(smach.State):
             robot_speed = 1         #move the robot forward
             robotSpeedPub.publish(robot_speed)
             return False
-        
 
 
 # define state Approach
@@ -53,9 +54,9 @@ class Approach(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('Executing state APPROACH')
-        if self.rfReading <= 0.2    #0.2 meters
+        if self.rfReading <= 0.2:    #0.2 meters
             return True
-        else if ((self.rfReading > 0.2) and (self.rfReading < 0.5)):
+        elif ((self.rfReading > 0.2) and (self.rfReading < 0.5)):
             #velocity curve
             robot_speed = 0.2         #replace with actual values
             robotSpeedPub.publish(robot_speed)
@@ -79,7 +80,7 @@ class Deterrents_On(smach.State):
             soundStatus = True          #Turn on the speaker
             soundPub(soundStatus)
             return False
-        else if self.rfReading > 0.5:
+        elif self.rfReading > 0.5:
             return True
 
 
@@ -117,7 +118,9 @@ def main():
 
     # Subscribers
     rospy.Subscriber("/rangefinder/front", Float32 , RfCallback)
-    rospy.Subscriber("/switch", String , SwitchCallback)
+    # rospy.Subscriber("/rangefinder/back", Float32 , RfCallback)
+
+    # rospy.Subscriber("/switch", String , SwitchCallback)
 
     # Publishers
     robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
@@ -147,3 +150,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

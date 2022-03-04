@@ -7,14 +7,23 @@ import smach_ros
 from std_msgs.msg import Float32, Bool, String, Int32
 import threading
 
+#Constants
+PATRAOL_SPEED = 0.10 #10% motor power
+APPROACH_SPEED = 0.07 #7% motor speed
+APPROACH_DIST = 20 #inches
+STOP_DIST = 10 #inches
+ENC_FWD_LIMIT = 1000 # Ticks
+ENC_REV_LIMIT = -1000 # Ticks
+ROBOT_ACCEL = 0.001 # 0.1% per tick
+
 #Global Variables
-patrolSpeed = 0.10 #10% motor power
-approachSpeed = 0.07 #7% motor speed
-approachDist = 20 #inches
-stopDist = 10 #inches
 rfBackGlobal = 999 #inch
 rfFrontGlobal = 999 #inch
+encGlobal = 0 #ticks
+currRobotSpeed = 0 # % motor
 switchGlobal = 'ON'
+
+
 
 # define state Static
 class Static(smach.State):
@@ -23,7 +32,7 @@ class Static(smach.State):
         self.switch = switchGlobal
 
     def execute(self, userdata):
-        rospy.loginfo('Executing state STATIC')
+        # rospy.loginfo('Executing state STATIC')
         if self.switch == 'ON':
             return 'ON'   #switch to Move State
         else:
@@ -34,21 +43,66 @@ class Static(smach.State):
 
 
 # define state Move
-class Move(smach.State):
+class FWD(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['ENC_LIM', False])
+        self.rfReading = rfFrontGlobal
+        self.encReading = encGlobal
+        robotSpeedPub.publish(PATRAOL_SPEED)
+    )
+    def execute(self, userdata):
+        if(encReading > ENC_FWD_LIMIT):
+            currRobotSpeed = PATRAOL_SPEED
+            return 'ENC_LIM'
+        # rospy.loginfo('Executing state Fwd')
+        # if self.rfReading <= APPROACH_DIST:    #0.5 meters
+        #     robot_speed = 0         #stop the robot
+        #     robotSpeedPub.publish(robot_speed)
+        #     return True     #switch to Approach State
+        # else:
+        #     robot_speed = PATRAOL_SPEED
+             #move the robot forward
+        #     robotSpeedPub.publish(robot_speed)
+        #     return False
+        return False
+
+class REV(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['ENC_LIM', False])
+        self.encReading = encGlobal
+        robotSpeedPub.publish(-PATRAOL_SPEED)
+    )
+    def execute(self, userdata):
+        if(encReading < ENC_REV_LIMIT):
+            currRobotSpeed = -PATRAOL_SPEED
+            return 'ENC_LIM'
+
+        return False
+
+class FWD2REV(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=[True, False])
-        self.rfReading = rfFrontGlobal
-
+        self.encReading = encGlobal
+        robotSpeedPub.publish(currRobotSpeed)
+    )
     def execute(self, userdata):
-        rospy.loginfo('Executing state MOVE')
-        if self.rfReading <= approachDist:    #0.5 meters
-            robot_speed = 0         #stop the robot
-            robotSpeedPub.publish(robot_speed)
-            return True     #switch to Approach State
-        else:
-            robot_speed = patrolSpeed         #move the robot forward
-            robotSpeedPub.publish(robot_speed)
-            return False
+        currRobotSpeed = currRobotSpeed - ROBOT_ACCEL
+        if currRobotSpeed <= -PATRAOL_SPEED:
+            return True
+        return False
+
+class REV2FWD(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=[True, False])
+        self.encReading = encGlobal
+        robotSpeedPub.publish(currRobotSpeed)
+    )
+    def execute(self, userdata):
+        currRobotSpeed = currRobotSpeed + ROBOT_ACCEL
+        if currRobotSpeed >= PATRAOL_SPEED:
+            return True
+        return False
+            
 
 
 # define state Approach
@@ -59,11 +113,12 @@ class Approach(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('Executing state APPROACH')
-        if self.rfReading <= stopDist:    #0.2 meters
+        if self.rfReading <= STOP_DIST:    #0.2 meters
             return True
-        elif ((self.rfReading > stopDist) and (self.rfReading < approachDist)):
+        elif ((self.rfReading > STOP_DIST) and (self.rfReading < APPROACH_DIST)):
             #velocity curve
-            robot_speed = patrolSpeed         #replace with actual values
+            robot_speed = PATRAOL_SPEED
+                 #replace with actual values
             robotSpeedPub.publish(robot_speed)
             return False
 
@@ -76,7 +131,7 @@ class Deterrents_On(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('Executing state DETERRENTS_ON')
-        if self.rfReading <= stopDist:    #0.2 meters
+        if self.rfReading <= STOP_DIST:    #0.2 meters
             #turn on the the deterrents
             #flash the LEDS for 5 seconds
             flashLightStatus = True     #Turn on the leds
@@ -85,7 +140,7 @@ class Deterrents_On(smach.State):
             soundStatus = 4000          #Turn on the speaker hz
             soundPub.publish(soundStatus)
             return False
-        elif self.rfReading > approachDist:
+        elif self.rfReading > APPROACH_DIST:
             return True
 
 
@@ -116,10 +171,14 @@ def RfFrontCallback(data):
 def RfBackCallback(data):
     globals()['rfBackGlobal'] = data.data
 
+def RfBackCallback(data):
+    globals()['encGlobal'] = data.data
+
 
 # Subscribers
 rospy.Subscriber("/rangefinder/front", Float32 , RfFrontCallback)
 rospy.Subscriber("/rangefinder/back", Float32, RfBackCallback)
+rospy.Subscriber("/encoder", Float32, EncCallback)
 
 # Publishers
 robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
@@ -138,14 +197,14 @@ def main():
         # Add states to the container
         smach.StateMachine.add('STATIC', Static(), 
                                transitions={'ON':'MOVE', 'OFF':'STATIC'})
-        smach.StateMachine.add('MOVE', Move(), 
-                               transitions={True :'APPROACH', False:'MOVE'})
-        smach.StateMachine.add('APPROACH', Approach(), 
-                               transitions={True :'DETERRENTS_ON', False:'APPROACH'})
-        smach.StateMachine.add('DETERRENTS_ON', Deterrents_On(), 
-                               transitions={True :'DETERRENTS_OFF', False: 'DETERRENTS_ON'})
-        smach.StateMachine.add('DETERRENTS_OFF', Deterrents_Off(), 
-                               transitions={True :'STATIC', False:'STATIC'})
+        smach.StateMachine.add('FWD', FWD(), 
+                               transitions={'ENC_LIM' :'FWD2REV', False:'FWD'})
+        smach.StateMachine.add('FWD2REV', FWD2REV(), 
+                               transitions={True :'REV', False:'FWD2REV'})
+        smach.StateMachine.add('REV', REV(), 
+                               transitions={ENC_LIM :'REV2FWD', False: 'REV'})
+        smach.StateMachine.add('REV2FWD', REV2FWD(), 
+                               transitions={True :'FWD', False:'REV2FWD'})
 
     # Create a thread to execute the smach container
     smach_thread = threading.Thread(target=sm.execute)

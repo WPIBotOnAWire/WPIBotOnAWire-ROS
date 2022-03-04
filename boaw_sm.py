@@ -104,63 +104,63 @@ class REV2FWD(smach.State):
         return False
 
 
-# define state Approach
-class Approach(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=[True, False])
-        self.rfReading = rfFrontGlobal
+# # define state Approach
+# class Approach(smach.State):
+#     def __init__(self):
+#         smach.State.__init__(self, outcomes=[True, False])
+#         self.rfReading = rfFrontGlobal
 
-    def execute(self, userdata):
-        rospy.loginfo('Executing state APPROACH')
-        if self.rfReading <= STOP_DIST:    #0.2 meters
-            return True
-        elif ((self.rfReading > STOP_DIST) and (self.rfReading < APPROACH_DIST)):
-            #velocity curve
-            robot_speed = PATRAOL_SPEED
-                 #replace with actual values
-            robotSpeedPub.publish(robot_speed)
-            return False
-
-
-# define state Deterrents_On
-class Deterrents_On(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=[True, False])
-        self.rfReading = rfFrontGlobal
-
-    def execute(self, userdata):
-        rospy.loginfo('Executing state DETERRENTS_ON')
-        if self.rfReading <= STOP_DIST:    #0.2 meters
-            #turn on the the deterrents
-            #flash the LEDS for 5 seconds
-            flashLightStatus = True     #Turn on the leds
-            flashLightPub.publish(flashLightStatus)
-            #create the sound for 5 seconds
-            soundStatus = 4000          #Turn on the speaker hz
-            soundPub.publish(soundStatus)
-            return False
-        elif self.rfReading > APPROACH_DIST:
-            return True
+#     def execute(self, userdata):
+#         rospy.loginfo('Executing state APPROACH')
+#         if self.rfReading <= STOP_DIST:    #0.2 meters
+#             return True
+#         elif ((self.rfReading > STOP_DIST) and (self.rfReading < APPROACH_DIST)):
+#             #velocity curve
+#             robot_speed = PATRAOL_SPEED
+#                  #replace with actual values
+#             robotSpeedPub.publish(robot_speed)
+#             return False
 
 
-# define state Deterrents_Off
-class Deterrents_Off(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=[True, False])
-        self.rfReading = rfFrontGlobal
+# # define state Deterrents_On
+# class Deterrents_On(smach.State):
+#     def __init__(self):
+#         smach.State.__init__(self, outcomes=[True, False])
+#         self.rfReading = rfFrontGlobal
 
-    def execute(self, userdata):
-        rospy.loginfo('Executing state DETERRENTS_ON')
-        #turn on the the deterrents
-        #flash the LEDS for 5 seconds
-        #create the sound for 5 seconds
-        flashLightStatus = False       #turn off the leds
-        flashLightPub.publish(flashLightStatus)
-        #create the sound for 5 seconds
-        soundStatus = False            #turn of the speakers
-        globals()['switchGlobal'] = 'OFF'
-        soundPub(soundStatus)
-        return True
+#     def execute(self, userdata):
+#         rospy.loginfo('Executing state DETERRENTS_ON')
+#         if self.rfReading <= STOP_DIST:    #0.2 meters
+#             #turn on the the deterrents
+#             #flash the LEDS for 5 seconds
+#             flashLightStatus = True     #Turn on the leds
+#             flashLightPub.publish(flashLightStatus)
+#             #create the sound for 5 seconds
+#             soundStatus = 4000          #Turn on the speaker hz
+#             soundPub.publish(soundStatus)
+#             return False
+#         elif self.rfReading > APPROACH_DIST:
+#             return True
+
+
+# # define state Deterrents_Off
+# class Deterrents_Off(smach.State):
+#     def __init__(self):
+#         smach.State.__init__(self, outcomes=[True, False])
+#         self.rfReading = rfFrontGlobal
+
+#     def execute(self, userdata):
+#         rospy.loginfo('Executing state DETERRENTS_ON')
+#         #turn on the the deterrents
+#         #flash the LEDS for 5 seconds
+#         #create the sound for 5 seconds
+#         flashLightStatus = False       #turn off the leds
+#         flashLightPub.publish(flashLightStatus)
+#         #create the sound for 5 seconds
+#         soundStatus = False            #turn of the speakers
+#         globals()['switchGlobal'] = 'OFF'
+#         soundPub(soundStatus)
+#         return True
 
 
 def RfFrontCallback(data):
@@ -195,7 +195,7 @@ def main():
     with sm:
         # Add states to the container
         smach.StateMachine.add('STATIC', Static(), 
-                               transitions={'ON':'MOVE', 'OFF':'STATIC'})
+                               transitions={'ON':'FWD', 'OFF':'STATIC'})
         smach.StateMachine.add('FWD', FWD(), 
                                transitions={'ENC_LIM' :'FWD2REV', False:'FWD'})
         smach.StateMachine.add('FWD2REV', FWD2REV(), 

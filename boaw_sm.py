@@ -4,11 +4,16 @@ import roslib
 import rospy
 import smach
 import smach_ros
-from std_msgs.msg import Float32, Bool, String
+from std_msgs.msg import Float32, Bool, String, Int32
 import threading
 
 #Global Variables
-rfReadingGlobal = 0
+patrolSpeed = 0.10 #10% motor power
+approachSpeed = 0.07 #7% motor speed
+approachDist = 20 #inches
+stopDist = 10 #inches
+rfBackGlobal = 999 #inch
+rfFrontGlobal = 999 #inch
 switchGlobal = 'ON'
 
 # define state Static
@@ -32,16 +37,16 @@ class Static(smach.State):
 class Move(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=[True, False])
-        self.rfReading = rfReadingGlobal
+        self.rfReading = rfFrontGlobal
 
     def execute(self, userdata):
         rospy.loginfo('Executing state MOVE')
-        if self.rfReading <= 0.5:    #0.5 meters
+        if self.rfReading <= approachDist:    #0.5 meters
             robot_speed = 0         #stop the robot
             robotSpeedPub.publish(robot_speed)
             return True     #switch to Approach State
         else:
-            robot_speed = 1         #move the robot forward
+            robot_speed = patrolSpeed         #move the robot forward
             robotSpeedPub.publish(robot_speed)
             return False
 
@@ -50,15 +55,15 @@ class Move(smach.State):
 class Approach(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=[True, False])
-        self.rfReading = rfReadingGlobal
+        self.rfReading = rfFrontGlobal
 
     def execute(self, userdata):
         rospy.loginfo('Executing state APPROACH')
-        if self.rfReading <= 0.2:    #0.2 meters
+        if self.rfReading <= stopDist:    #0.2 meters
             return True
-        elif ((self.rfReading > 0.2) and (self.rfReading < 0.5)):
+        elif ((self.rfReading > stopDist) and (self.rfReading < approachDist)):
             #velocity curve
-            robot_speed = 0.2         #replace with actual values
+            robot_speed = patrolSpeed         #replace with actual values
             robotSpeedPub.publish(robot_speed)
             return False
 
@@ -67,20 +72,20 @@ class Approach(smach.State):
 class Deterrents_On(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=[True, False])
-        self.rfReading = rfReadingGlobal
+        self.rfReading = rfFrontGlobal
 
     def execute(self, userdata):
         rospy.loginfo('Executing state DETERRENTS_ON')
-        if self.rfReading <= 0.2:    #0.2 meters
+        if self.rfReading <= stopDist:    #0.2 meters
             #turn on the the deterrents
             #flash the LEDS for 5 seconds
             flashLightStatus = True     #Turn on the leds
-            flashLightPub(flashLightStatus)
+            flashLightPub.publish(flashLightStatus)
             #create the sound for 5 seconds
-            soundStatus = True          #Turn on the speaker
-            soundPub(soundStatus)
+            soundStatus = 4000          #Turn on the speaker hz
+            soundPub.publish(soundStatus)
             return False
-        elif self.rfReading > 0.5:
+        elif self.rfReading > approachDist:
             return True
 
 
@@ -88,7 +93,7 @@ class Deterrents_On(smach.State):
 class Deterrents_Off(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=[True, False])
-        self.rfReading = rfReadingGlobal
+        self.rfReading = rfFrontGlobal
 
     def execute(self, userdata):
         rospy.loginfo('Executing state DETERRENTS_ON')
@@ -96,7 +101,7 @@ class Deterrents_Off(smach.State):
         #flash the LEDS for 5 seconds
         #create the sound for 5 seconds
         flashLightStatus = False       #turn off the leds
-        flashLightPub(flashLightStatus)
+        flashLightPub.publish(flashLightStatus)
         #create the sound for 5 seconds
         soundStatus = False            #turn of the speakers
         globals()['switchGlobal'] = 'OFF'
@@ -104,24 +109,22 @@ class Deterrents_Off(smach.State):
         return True
 
 
-def RfCallback(data):
+def RfFrontCallback(data):
     # assign rangefinder reading
-    globals()['rfReadingGlobal'] = data
+    globals()['rfFrontGlobal'] = data.data
 
-def SwitchCallback(data):
-    # assign rangefinder reading
-    globals()['switchGlobal'] = data
-
+def RfBackCallback(data):
+    globals()['rfBackGlobal'] = data.data
 
 
 # Subscribers
-rospy.Subscriber("/rangefinder/front", Float32 , RfCallback)
-rospy.Subscriber("/switch", String , SwitchCallback)
+rospy.Subscriber("/rangefinder/front", Float32 , RfFrontCallback)
+rospy.Subscriber("/rangefinder/back", Float32, RfBackCallback)
 
 # Publishers
 robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
 flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
-soundPub = rospy.Publisher('/deterrents/speaker', Bool, queue_size=10)
+soundPub = rospy.Publisher('/play_sound', Int32, queue_size=10)
 
 
 def main():

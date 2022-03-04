@@ -49,7 +49,7 @@ class FWD(smach.State):
         self.rfReading = rfFrontGlobal
         self.encReading = encGlobal
         robotSpeedPub.publish(PATRAOL_SPEED)
-    )
+
     def execute(self, userdata):
         if(encReading > ENC_FWD_LIMIT):
             currRobotSpeed = PATRAOL_SPEED
@@ -71,7 +71,7 @@ class REV(smach.State):
         smach.State.__init__(self, outcomes=['ENC_LIM', False])
         self.encReading = encGlobal
         robotSpeedPub.publish(-PATRAOL_SPEED)
-    )
+
     def execute(self, userdata):
         if(encReading < ENC_REV_LIMIT):
             currRobotSpeed = -PATRAOL_SPEED
@@ -84,7 +84,7 @@ class FWD2REV(smach.State):
         smach.State.__init__(self, outcomes=[True, False])
         self.encReading = encGlobal
         robotSpeedPub.publish(currRobotSpeed)
-    )
+
     def execute(self, userdata):
         currRobotSpeed = currRobotSpeed - ROBOT_ACCEL
         if currRobotSpeed <= -PATRAOL_SPEED:
@@ -96,13 +96,12 @@ class REV2FWD(smach.State):
         smach.State.__init__(self, outcomes=[True, False])
         self.encReading = encGlobal
         robotSpeedPub.publish(currRobotSpeed)
-    )
+
     def execute(self, userdata):
         currRobotSpeed = currRobotSpeed + ROBOT_ACCEL
         if currRobotSpeed >= PATRAOL_SPEED:
             return True
         return False
-            
 
 
 # define state Approach
@@ -171,7 +170,7 @@ def RfFrontCallback(data):
 def RfBackCallback(data):
     globals()['rfBackGlobal'] = data.data
 
-def RfBackCallback(data):
+def EncCallback(data):
     globals()['encGlobal'] = data.data
 
 
@@ -202,7 +201,7 @@ def main():
         smach.StateMachine.add('FWD2REV', FWD2REV(), 
                                transitions={True :'REV', False:'FWD2REV'})
         smach.StateMachine.add('REV', REV(), 
-                               transitions={ENC_LIM :'REV2FWD', False: 'REV'})
+                               transitions={'ENC_LIM' :'REV2FWD', False: 'REV'})
         smach.StateMachine.add('REV2FWD', REV2FWD(), 
                                transitions={True :'FWD', False:'REV2FWD'})
 

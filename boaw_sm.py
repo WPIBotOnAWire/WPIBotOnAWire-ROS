@@ -8,19 +8,19 @@ from std_msgs.msg import Float32, Bool, String, Int32
 import threading
 
 #Constants
-PATRAOL_SPEED = 0.10 #10% motor power
+PATRAOL_SPEED = 0.15 #10% motor power
 APPROACH_SPEED = 0.07 #7% motor speed
 APPROACH_DIST = 20 #inches
 STOP_DIST = 10 #inches
 ENC_FWD_LIMIT = 1000 # Ticks
 ENC_REV_LIMIT = -1000 # Ticks
-ROBOT_ACCEL = 0.001 # 0.1% per tick
+ROBOT_ACCEL = 0.0005 # 0.1% per tick
 
 #Global Variables
 rfBackGlobal = 999 #inch
 rfFrontGlobal = 999 #inch
 encGlobal = 0 #ticks
-currRobotSpeed = 0 # % motor
+currRobotSpeed = 0.0 # % motor
 switchGlobal = 'ON'
 
 
@@ -51,7 +51,9 @@ class FWD(smach.State):
         robotSpeedPub.publish(PATRAOL_SPEED)
 
     def execute(self, userdata):
-        if(encReading > ENC_FWD_LIMIT):
+        self.encReading = encGlobal
+        rospy.loginfo('Encorder: '+str(self.encReading))
+        if(self.encReading > ENC_FWD_LIMIT):
             currRobotSpeed = PATRAOL_SPEED
             return 'ENC_LIM'
         # rospy.loginfo('Executing state Fwd')
@@ -64,6 +66,7 @@ class FWD(smach.State):
              #move the robot forward
         #     robotSpeedPub.publish(robot_speed)
         #     return False
+        robotSpeedPub.publish(PATRAOL_SPEED)
         return False
 
 class REV(smach.State):
@@ -73,20 +76,23 @@ class REV(smach.State):
         robotSpeedPub.publish(-PATRAOL_SPEED)
 
     def execute(self, userdata):
-        if(encReading < ENC_REV_LIMIT):
+        self.encReading = encGlobal
+        rospy.loginfo('Encorder: '+str(self.encReading))
+        if(self.encReading < ENC_REV_LIMIT):
             currRobotSpeed = -PATRAOL_SPEED
             return 'ENC_LIM'
-
+        robotSpeedPub.publish(-PATRAOL_SPEED)
         return False
 
 class FWD2REV(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=[True, False])
-        self.encReading = encGlobal
         robotSpeedPub.publish(currRobotSpeed)
 
     def execute(self, userdata):
-        currRobotSpeed = currRobotSpeed - ROBOT_ACCEL
+        robotSpeedPub.publish(currRobotSpeed)
+        rospy.loginfo('current speed: '+str(currRobotSpeed))
+        globals()['currRobotSpeed'] = currRobotSpeed - ROBOT_ACCEL
         if currRobotSpeed <= -PATRAOL_SPEED:
             return True
         return False
@@ -94,11 +100,12 @@ class FWD2REV(smach.State):
 class REV2FWD(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=[True, False])
-        self.encReading = encGlobal
         robotSpeedPub.publish(currRobotSpeed)
 
     def execute(self, userdata):
-        currRobotSpeed = currRobotSpeed + ROBOT_ACCEL
+        robotSpeedPub.publish(currRobotSpeed)
+        globals()['currRobotSpeed'] = currRobotSpeed + ROBOT_ACCEL
+        rospy.loginfo('current speed: '+str(currRobotSpeed))
         if currRobotSpeed >= PATRAOL_SPEED:
             return True
         return False
@@ -166,12 +173,15 @@ class REV2FWD(smach.State):
 def RfFrontCallback(data):
     # assign rangefinder reading
     globals()['rfFrontGlobal'] = data.data
+    # rospy.loginfo("Front RF Callback")
 
 def RfBackCallback(data):
     globals()['rfBackGlobal'] = data.data
+    # rospy.loginfo("Back RF Callback")
 
 def EncCallback(data):
     globals()['encGlobal'] = data.data
+    # rospy.loginfo("Encoder Callback")
 
 
 # Subscribers

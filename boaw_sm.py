@@ -19,7 +19,7 @@ ENC_FWD_LIMIT = -1200 # Ticks
 ENC_REV_LIMIT = 1200 # Ticks
 ROBOT_ACCEL = 0.0015 # 0.1% per tick
 START_CHARGING_THRESH = 16100 #mV
-DONE_CHARDING_THRESH = 16200 #mV 
+DONE_CHARDING_THRESH = 16250 #mV 
 BATTERY_CHARGING_THRESH = 40 #mV - A voltage jump of xmV is needed to detect as charged
 
 #Global Variables
@@ -233,7 +233,7 @@ def main():
         smach.StateMachine.add('OBS', OBS(), 
                                transitions={'CLEAR':'FWD', False:'OBS'})
         smach.StateMachine.add('APPROACH_DOCK', APPROACH_DOCK(), 
-                               transitions={'DOCKED':'FWD', False:'APPROACH_DOCK'})
+                               transitions={'DOCKED':'CHARGING', False:'APPROACH_DOCK'})
         smach.StateMachine.add('CHARGING', CHARGING(), 
                                transitions={'CHARGED':'REV', False:'CHARGING'})
 

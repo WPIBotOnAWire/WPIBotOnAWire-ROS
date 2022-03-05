@@ -15,10 +15,10 @@ PATRAOL_REV_SPEED = -0.10 #10% motor power
 APPROACH_REV_SPEED = -0.07 #7% motor speed
 APPROACH_DIST = 20 #inches
 STOP_DIST = 10 #inches
-ENC_FWD_LIMIT = -12000 # Ticks
-ENC_REV_LIMIT = 12000 # Ticks
+ENC_FWD_LIMIT = -1200 # Ticks
+ENC_REV_LIMIT = 1200 # Ticks
 ROBOT_ACCEL = 0.0015 # 0.1% per tick
-START_CHARGING_THRESH = 16000 #mV
+START_CHARGING_THRESH = 16100 #mV
 DONE_CHARDING_THRESH = 16200 #mV 
 BATTERY_CHARGING_THRESH = 40 #mV - A voltage jump of xmV is needed to detect as charged
 
@@ -147,6 +147,7 @@ class OBS(smach.State):
 class APPROACH_DOCK(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['DOCKED', False])
+        rospy.sleep(1) #sleep to let battery voltage normalize before recording
         globals()['voltageBeforeCharging'] = batGlobal
     def execute(self, userdata):
         self.batReading = batGlobal
@@ -158,7 +159,7 @@ class APPROACH_DOCK(smach.State):
         else:
             robotSpeedPub.publish(PATRAOL_FWD_SPEED)
 
-        if self.batReading > batGlobal + BATTERY_CHARGING_THRESH:
+        if self.batReading > voltageBeforeCharging + BATTERY_CHARGING_THRESH:
             return 'DOCKED'
 
         return False

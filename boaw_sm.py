@@ -5,23 +5,32 @@ import rospy
 import smach
 import smach_ros
 from std_msgs.msg import Float32, Bool, String, Int32
+from sensor_msgs.msg import BatteryState
 import threading
 
 #Constants
-PATRAOL_SPEED = 0.10 #10% motor power
-APPROACH_SPEED = 0.07 #7% motor speed
+PATRAOL_FWD_SPEED = 0.10 #10% motor power
+APPROACH_FWD_SPEED = 0.07 #7% motor speed
+PATRAOL_REV_SPEED = -0.10 #10% motor power
+APPROACH_REV_SPEED = -0.07 #7% motor speed
 APPROACH_DIST = 20 #inches
 STOP_DIST = 10 #inches
 ENC_FWD_LIMIT = -12000 # Ticks
 ENC_REV_LIMIT = 12000 # Ticks
 ROBOT_ACCEL = 0.0015 # 0.1% per tick
+START_CHARGING_THRESH = 16000 #mV
+DONE_CHARDING_THRESH = 16200 #mV 
+BATTERY_CHARGING_THRESH = 40 #mV - A voltage jump of xmV is needed to detect as charged
 
 #Global Variables
 rfBackGlobal = 999 #inch
 rfFrontGlobal = 999 #inch
 encGlobal = 0 #ticks
-currRobotSpeed = 0.0 # % motor
-switchGlobal = 'ON'
+batGlobal = 0 #ticks
+currRobotSpeed = 0.0 # %motor
+voltageBeforeCharging = 99999 #mV
+switchGlobal = 'ON' #this can be used by adding an button on the bot and having that start or stop the state machine
+
 
 
 
@@ -36,8 +45,7 @@ class Static(smach.State):
         if self.switch == 'ON':
             return 'ON'   #switch to Move State
         else:
-            robot_speed = 0
-            robotSpeedPub.publish(robot_speed)
+            robotSpeedPub.publish(0)
             return 'OFF'
 
 
@@ -45,49 +53,45 @@ class Static(smach.State):
 # define state Move
 class FWD(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False])
+        smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW'])
         self.rfReading = rfFrontGlobal
         self.encReading = encGlobal
-        robotSpeedPub.publish(PATRAOL_SPEED)
+        robotSpeedPub.publish(PATRAOL_FWD_SPEED)
 
     def execute(self, userdata):
         self.encReading = encGlobal
         self.rfReading = rfFrontGlobal
+        self.batReading = batGlobal
+        rospy.loginfo('Batt: '+str(self.batReading))
         rospy.loginfo('FrontRF: '+str(self.rfReading))
         rospy.loginfo('Encorder: '+str(self.encReading))
         if(self.encReading < ENC_FWD_LIMIT):
-            currRobotSpeed = PATRAOL_SPEED
+            currRobotSpeed = PATRAOL_FWD_SPEED
             return 'ENC_LIM'
 
         if(self.rfReading < APPROACH_DIST):
             robotSpeedPub.publish(0)
             return 'RF_LIM'
-        # rospy.loginfo('Executing state Fwd')
-        # if self.rfReading <= APPROACH_DIST:    #0.5 meters
-        #     robot_speed = 0         #stop the robot
-        #     robotSpeedPub.publish(robot_speed)
-        #     return True     #switch to Approach State
-        # else:
-        #     robot_speed = PATRAOL_SPEED
-             #move the robot forward
-        #     robotSpeedPub.publish(robot_speed)
-        #     return False
-        robotSpeedPub.publish(PATRAOL_SPEED)
+
+        if(self.batReading < START_CHARGING_THRESH):
+            return 'BAT_LOW'
+
+        robotSpeedPub.publish(PATRAOL_FWD_SPEED)
         return False
 
 class REV(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['ENC_LIM', False])
         self.encReading = encGlobal
-        robotSpeedPub.publish(-PATRAOL_SPEED)
+        robotSpeedPub.publish(PATRAOL_REV_SPEED)
 
     def execute(self, userdata):
         self.encReading = encGlobal
         rospy.loginfo('Encorder: '+str(self.encReading))
         if(self.encReading > ENC_REV_LIMIT):
-            currRobotSpeed = -PATRAOL_SPEED
+            currRobotSpeed = PATRAOL_REV_SPEED
             return 'ENC_LIM'
-        robotSpeedPub.publish(-PATRAOL_SPEED)
+        robotSpeedPub.publish(PATRAOL_REV_SPEED)
         return False
 
 class FWD2REV(smach.State):
@@ -99,7 +103,7 @@ class FWD2REV(smach.State):
         robotSpeedPub.publish(currRobotSpeed)
         rospy.loginfo('current speed: '+str(currRobotSpeed))
         globals()['currRobotSpeed'] = currRobotSpeed - ROBOT_ACCEL
-        if currRobotSpeed <= -PATRAOL_SPEED:
+        if currRobotSpeed <= PATRAOL_REV_SPEED:
             return True
         return False
 
@@ -112,7 +116,7 @@ class REV2FWD(smach.State):
         robotSpeedPub.publish(currRobotSpeed)
         globals()['currRobotSpeed'] = currRobotSpeed + ROBOT_ACCEL
         rospy.loginfo('current speed: '+str(currRobotSpeed))
-        if currRobotSpeed >= PATRAOL_SPEED:
+        if currRobotSpeed >= PATRAOL_FWD_SPEED:
             return True
         return False
 
@@ -140,76 +144,57 @@ class OBS(smach.State):
            
         return False
 
-# # define state Approach
-# class Approach(smach.State):
-#     def __init__(self):
-#         smach.State.__init__(self, outcomes=[True, False])
-#         self.rfReading = rfFrontGlobal
+class APPROACH_DOCK(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['DOCKED', False])
+        globals()['voltageBeforeCharging'] = batGlobal
+    def execute(self, userdata):
+        self.batReading = batGlobal
+        self.encReading = encGlobal
+        rospy.loginfo('Bat Voltage: '+str(self.batReading))
+        rospy.loginfo('Enc Reading: '+str(self.encReading))
+        if(self.encReading < ENC_FWD_LIMIT):
+            robotSpeedPub.publish(APPROACH_FWD_SPEED)
+        else:
+            robotSpeedPub.publish(PATRAOL_FWD_SPEED)
 
-#     def execute(self, userdata):
-#         rospy.loginfo('Executing state APPROACH')
-#         if self.rfReading <= STOP_DIST:    #0.2 meters
-#             return True
-#         elif ((self.rfReading > STOP_DIST) and (self.rfReading < APPROACH_DIST)):
-#             #velocity curve
-#             robot_speed = PATRAOL_SPEED
-#                  #replace with actual values
-#             robotSpeedPub.publish(robot_speed)
-#             return False
+        if self.batReading > batGlobal + BATTERY_CHARGING_THRESH:
+            return 'DOCKED'
 
+        return False
+        
 
-# # define state Deterrents_On
-# class Deterrents_On(smach.State):
-#     def __init__(self):
-#         smach.State.__init__(self, outcomes=[True, False])
-#         self.rfReading = rfFrontGlobal
+        
+class CHARGING(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['CHARGED', False])
 
-#     def execute(self, userdata):
-#         rospy.loginfo('Executing state DETERRENTS_ON')
-#         if self.rfReading <= STOP_DIST:    #0.2 meters
-#             #turn on the the deterrents
-#             #flash the LEDS for 5 seconds
-#             flashLightStatus = True     #Turn on the leds
-#             flashLightPub.publish(flashLightStatus)
-#             #create the sound for 5 seconds
-#             soundStatus = 4000          #Turn on the speaker hz
-#             soundPub.publish(soundStatus)
-#             return False
-#         elif self.rfReading > APPROACH_DIST:
-#             return True
+    def execute(self, userdata):
+        self.batReading = batGlobal
+        rospy.loginfo('Bat Voltage: '+str(self.batReading))
+        robotSpeedPub.publish(0)
+        if self.batReading > DONE_CHARDING_THRESH:
+            return 'CHARGED'
+
+        return False
 
 
-# # define state Deterrents_Off
-# class Deterrents_Off(smach.State):
-#     def __init__(self):
-#         smach.State.__init__(self, outcomes=[True, False])
-#         self.rfReading = rfFrontGlobal
 
-#     def execute(self, userdata):
-#         rospy.loginfo('Executing state DETERRENTS_ON')
-#         #turn on the the deterrents
-#         #flash the LEDS for 5 seconds
-#         #create the sound for 5 seconds
-#         flashLightStatus = False       #turn off the leds
-#         flashLightPub.publish(flashLightStatus)
-#         #create the sound for 5 seconds
-#         soundStatus = False            #turn of the speakers
-#         globals()['switchGlobal'] = 'OFF'
-#         soundPub(soundStatus)
-#         return True
-
-
-def RfFrontCallback(data):
+def RfFrontCallback(msg):
     # assign rangefinder reading
-    globals()['rfFrontGlobal'] = data.data
+    globals()['rfFrontGlobal'] = msg.data
     # rospy.loginfo("Front RF Callback")
 
-def RfBackCallback(data):
-    globals()['rfBackGlobal'] = data.data
+def RfBackCallback(msg):
+    globals()['rfBackGlobal'] = msg.data
     # rospy.loginfo("Back RF Callback")
 
-def EncCallback(data):
-    globals()['encGlobal'] = data.data
+def EncCallback(msg):
+    globals()['encGlobal'] = msg.data
+    # rospy.loginfo("Encoder Callback")
+
+def BatCallback(msg):
+    globals()['batGlobal'] = msg.voltage
     # rospy.loginfo("Encoder Callback")
 
 
@@ -217,6 +202,7 @@ def EncCallback(data):
 rospy.Subscriber("/rangefinder/front", Float32 , RfFrontCallback)
 rospy.Subscriber("/rangefinder/back", Float32, RfBackCallback)
 rospy.Subscriber("/encoder", Float32, EncCallback)
+rospy.Subscriber("/battery", BatteryState, BatCallback)
 
 # Publishers
 robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
@@ -236,7 +222,7 @@ def main():
         smach.StateMachine.add('STATIC', Static(), 
                                transitions={'ON':'FWD', 'OFF':'STATIC'})
         smach.StateMachine.add('FWD', FWD(), 
-                               transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'OBS'} )
+                               transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'OBS','BAT_LOW':'APPROACH_DOCK'} )
         smach.StateMachine.add('FWD2REV', FWD2REV(), 
                                transitions={True :'REV', False:'FWD2REV'})
         smach.StateMachine.add('REV', REV(), 
@@ -245,6 +231,10 @@ def main():
                                transitions={True :'FWD', False:'REV2FWD'})
         smach.StateMachine.add('OBS', OBS(), 
                                transitions={'CLEAR':'FWD', False:'OBS'})
+        smach.StateMachine.add('APPROACH_DOCK', APPROACH_DOCK(), 
+                               transitions={'DOCKED':'FWD', False:'APPROACH_DOCK'})
+        smach.StateMachine.add('CHARGING', CHARGING(), 
+                               transitions={'CHARGED':'REV', False:'CHARGING'})
 
     # Create a thread to execute the smach container
     smach_thread = threading.Thread(target=sm.execute)

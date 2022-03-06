@@ -39,6 +39,7 @@ class Static(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['ON', 'OFF'])
         self.switch = switchGlobal
+        statePub.publish("Robot Disabled")
 
     def execute(self, userdata):
         # rospy.loginfo('Executing state STATIC')
@@ -57,6 +58,7 @@ class FWD(smach.State):
         self.rfReading = rfFrontGlobal
         self.encReading = encGlobal
         robotSpeedPub.publish(PATRAOL_FWD_SPEED)
+        statePub.publish("Patrolling Forwards")
 
     def execute(self, userdata):
         self.encReading = encGlobal
@@ -84,7 +86,7 @@ class REV(smach.State):
         smach.State.__init__(self, outcomes=['ENC_LIM', False])
         self.encReading = encGlobal
         robotSpeedPub.publish(PATRAOL_REV_SPEED)
-
+        statePub.publish("Patrolling Backwards")
     def execute(self, userdata):
         self.encReading = encGlobal
         rospy.loginfo('Encorder: '+str(self.encReading))
@@ -124,6 +126,7 @@ class OBS(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['CLEAR', False])
         self.rfReading = rfFrontGlobal
+        statePub.publish("Dettering Obstacle")
 
     def execute(self, userdata):
         rospy.loginfo('FrontRF: '+str(self.rfReading))
@@ -149,6 +152,7 @@ class APPROACH_DOCK(smach.State):
         smach.State.__init__(self, outcomes=['DOCKED', False])
         rospy.sleep(1) #sleep to let battery voltage normalize before recording
         globals()['voltageBeforeCharging'] = batGlobal
+        statePub.publish("Apporaching Dock")
     def execute(self, userdata):
         self.batReading = batGlobal
         self.encReading = encGlobal
@@ -169,7 +173,7 @@ class APPROACH_DOCK(smach.State):
 class CHARGING(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['CHARGED', False])
-
+        statePub.publish("Charging")
     def execute(self, userdata):
         self.batReading = batGlobal
         rospy.loginfo('Bat Voltage: '+str(self.batReading))
@@ -209,6 +213,7 @@ rospy.Subscriber("/battery", BatteryState, BatCallback)
 robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
 flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
 soundPub = rospy.Publisher('/play_sound', Int32, queue_size=10)
+statePub = rospy.Publisher('/robot_state', String, queue_size=10)
 
 
 def main():

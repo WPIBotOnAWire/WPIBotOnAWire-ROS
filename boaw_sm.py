@@ -18,7 +18,7 @@ STOP_DIST = 10 #inches
 ENC_FWD_LIMIT = -1200 # Ticks
 ENC_REV_LIMIT = 1200 # Ticks
 ROBOT_ACCEL = 0.0015 # 0.1% per tick
-START_CHARGING_THRESH = 16100 #mV
+START_CHARGING_THRESH = 15100 #mV
 DONE_CHARDING_THRESH = 16250 #mV 
 BATTERY_CHARGING_THRESH = 40 #mV - A voltage jump of xmV is needed to detect as charged
 
@@ -102,7 +102,7 @@ class FWD2REV(smach.State):
         robotSpeedPub.publish(currRobotSpeed)
 
     def execute(self, userdata):
-        statePub("Changing Directions")
+        statePub.publish("Changing Directions")
         robotSpeedPub.publish(currRobotSpeed)
         rospy.loginfo('current speed: '+str(currRobotSpeed))
         globals()['currRobotSpeed'] = currRobotSpeed - ROBOT_ACCEL
@@ -116,7 +116,7 @@ class REV2FWD(smach.State):
         robotSpeedPub.publish(currRobotSpeed)
 
     def execute(self, userdata):
-        statePub("Changing Directions")
+        statePub.publish("Changing Directions")
         robotSpeedPub.publish(currRobotSpeed)
         globals()['currRobotSpeed'] = currRobotSpeed + ROBOT_ACCEL
         rospy.loginfo('current speed: '+str(currRobotSpeed))

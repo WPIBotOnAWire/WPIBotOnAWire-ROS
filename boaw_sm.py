@@ -19,8 +19,8 @@ ENC_FWD_LIMIT = -1200 # Ticks
 ENC_REV_LIMIT = 1200 # Ticks
 ROBOT_ACCEL = 0.0015 # 0.1% per tick
 START_CHARGING_THRESH = 15100 #mV
-DONE_CHARDING_THRESH = 16250 #mV
-BATTERY_CHARGING_THRESH = 40 #mV - A voltage jump of xmV is needed to detect as charged
+DONE_CHARDING_THRESH = 15300 #mV
+BATTERY_CHARGING_THRESH = 30 #mV - A voltage jump of xmV is needed to detect as charged
 
 #Global Variables
 rfBackGlobal = 999 #inch
@@ -176,6 +176,7 @@ class APPROACH_DOCK(smach.State):
         self.encReading = encGlobal
         rospy.loginfo('Bat Voltage: '+str(self.batReading))
         rospy.loginfo('Enc Reading: '+str(self.encReading))
+        rospy.loginfo('Waiting for: '+str(voltageBeforeCharging+BATTERY_CHARGING_THRESH))
         if(self.encReading < ENC_FWD_LIMIT):
             robotSpeedPub.publish(APPROACH_FWD_SPEED)
         else:

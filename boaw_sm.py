@@ -52,7 +52,7 @@ class Static(smach.State):
 # define state Move
 class FWD(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW'])
+        smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP'])
         self.rfReading = rfFrontGlobal
         self.encReading = encGlobal
         robotSpeedPub.publish(PATRAOL_FWD_SPEED)
@@ -84,7 +84,7 @@ class FWD(smach.State):
 
 class REV(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['ENC_LIM', False])
+        smach.State.__init__(self, outcomes=['ENC_LIM', False,'ESTOP'])
         self.encReading = encGlobal
         robotSpeedPub.publish(PATRAOL_REV_SPEED)
     def execute(self, userdata):
@@ -102,7 +102,7 @@ class REV(smach.State):
 
 class FWD2REV(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=[True, False])
+        smach.State.__init__(self, outcomes=[True, False,'ESTOP'])
         robotSpeedPub.publish(currRobotSpeed)
 
     def execute(self, userdata):
@@ -119,7 +119,7 @@ class FWD2REV(smach.State):
 
 class REV2FWD(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=[True, False])
+        smach.State.__init__(self, outcomes=[True, False,'ESTOP'])
         robotSpeedPub.publish(currRobotSpeed)
 
     def execute(self, userdata):
@@ -136,7 +136,7 @@ class REV2FWD(smach.State):
 
 class OBS(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['CLEAR', False])
+        smach.State.__init__(self, outcomes=['CLEAR', False,'ESTOP'])
         self.rfReading = rfFrontGlobal
 
     def execute(self, userdata):
@@ -164,7 +164,7 @@ class OBS(smach.State):
 
 class APPROACH_DOCK(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['DOCKED', False])
+        smach.State.__init__(self, outcomes=['DOCKED', False,'ESTOP'])
         rospy.sleep(1) #sleep to let battery voltage normalize before recording
         globals()['voltageBeforeCharging'] = batGlobal
     def execute(self, userdata):
@@ -190,7 +190,7 @@ class APPROACH_DOCK(smach.State):
         
 class CHARGING(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['CHARGED', False])
+        smach.State.__init__(self, outcomes=['CHARGED', False,'ESTOP'])
     def execute(self, userdata):
         statePub.publish("Charging")
         self.switch = switchGlobal

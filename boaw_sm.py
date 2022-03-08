@@ -29,9 +29,7 @@ encGlobal = 0 #ticks
 batGlobal = 0 #ticks
 currRobotSpeed = 0.0 # %motor
 voltageBeforeCharging = 99999 #mV
-switchGlobal = 'ON' #this can be used by adding an button on the bot and having that start or stop the state machine
-
-
+switchGlobal = False #this can be used by adding an button on the bot and having that start or stop the state machine
 
 
 # define state Static
@@ -42,8 +40,8 @@ class Static(smach.State):
 
     def execute(self, userdata):
         statePub.publish("Robot Disabled")
-        # rospy.loginfo('Executing state STATIC')
-        if self.switch == 'ON':
+        self.switch = switchGlobal
+        if self.switch:
             return 'ON'   #switch to Move State
         else:
             robotSpeedPub.publish(0)
@@ -61,6 +59,9 @@ class FWD(smach.State):
 
     def execute(self, userdata):
         statePub.publish("Patrolling Forwards")
+        self.switch = switchGlobal
+        if self.switch:
+            return 'ESTOP'
         self.encReading = encGlobal
         self.rfReading = rfFrontGlobal
         self.batReading = batGlobal
@@ -88,6 +89,9 @@ class REV(smach.State):
         robotSpeedPub.publish(PATRAOL_REV_SPEED)
     def execute(self, userdata):
         statePub.publish("Patrolling Backwards")
+        self.switch = switchGlobal
+        if self.switch:
+            return 'ESTOP'
         self.encReading = encGlobal
         rospy.loginfo('Encorder: '+str(self.encReading))
         if(self.encReading > ENC_REV_LIMIT):
@@ -103,6 +107,9 @@ class FWD2REV(smach.State):
 
     def execute(self, userdata):
         statePub.publish("Changing Directions")
+        self.switch = switchGlobal
+        if self.switch:
+            return 'ESTOP'
         robotSpeedPub.publish(currRobotSpeed)
         rospy.loginfo('current speed: '+str(currRobotSpeed))
         globals()['currRobotSpeed'] = currRobotSpeed - ROBOT_ACCEL
@@ -117,6 +124,9 @@ class REV2FWD(smach.State):
 
     def execute(self, userdata):
         statePub.publish("Changing Directions")
+        self.switch = switchGlobal
+        if self.switch:
+            return 'ESTOP'
         robotSpeedPub.publish(currRobotSpeed)
         globals()['currRobotSpeed'] = currRobotSpeed + ROBOT_ACCEL
         rospy.loginfo('current speed: '+str(currRobotSpeed))
@@ -131,6 +141,9 @@ class OBS(smach.State):
 
     def execute(self, userdata):
         statePub.publish("Dettering Obstacle")
+        self.switch = switchGlobal
+        if self.switch:
+            return 'ESTOP'
         rospy.loginfo('FrontRF: '+str(self.rfReading))
         self.rfReading = rfFrontGlobal
          #turn on the the deterrents
@@ -156,6 +169,9 @@ class APPROACH_DOCK(smach.State):
         globals()['voltageBeforeCharging'] = batGlobal
     def execute(self, userdata):
         statePub.publish("Apporaching Dock")
+        self.switch = switchGlobal
+        if self.switch:
+            return 'ESTOP'
         self.batReading = batGlobal
         self.encReading = encGlobal
         rospy.loginfo('Bat Voltage: '+str(self.batReading))
@@ -177,6 +193,9 @@ class CHARGING(smach.State):
         smach.State.__init__(self, outcomes=['CHARGED', False])
     def execute(self, userdata):
         statePub.publish("Charging")
+        self.switch = switchGlobal
+        if self.switch:
+            return 'ESTOP'
         self.batReading = batGlobal
         rospy.loginfo('Bat Voltage: '+str(self.batReading))
         robotSpeedPub.publish(0)
@@ -202,12 +221,17 @@ def BatCallback(msg):
     globals()['batGlobal'] = msg.voltage
     # rospy.loginfo("Encoder Callback")
 
+def SwitchCallback(msg):
+    globals()['switchGlobal'] = msg.data
+    # rospy.loginfo("Encoder Callback")
+
 
 # Subscribers
 rospy.Subscriber("/rangefinder/front", Float32 , RfFrontCallback)
 rospy.Subscriber("/rangefinder/back", Float32, RfBackCallback)
 rospy.Subscriber("/encoder", Float32, EncCallback)
 rospy.Subscriber("/battery", BatteryState, BatCallback)
+rospy.Subscriber("/swtich", Bool, SwitchCallback)
 
 # Publishers
 robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
@@ -228,19 +252,19 @@ def main():
         smach.StateMachine.add('STATIC', Static(), 
                                transitions={'ON':'FWD', 'OFF':'STATIC'})
         smach.StateMachine.add('FWD', FWD(), 
-                               transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'OBS','BAT_LOW':'APPROACH_DOCK'} )
+                               transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'OBS','BAT_LOW':'APPROACH_DOCK','ESTOP':'STATIC'} )
         smach.StateMachine.add('FWD2REV', FWD2REV(), 
-                               transitions={True :'REV', False:'FWD2REV'})
+                               transitions={True :'REV', False:'FWD2REV','ESTOP':'STATIC'})
         smach.StateMachine.add('REV', REV(), 
-                               transitions={'ENC_LIM' :'REV2FWD', False: 'REV'})
+                               transitions={'ENC_LIM' :'REV2FWD', False: 'REV','ESTOP':'STATIC'})
         smach.StateMachine.add('REV2FWD', REV2FWD(), 
-                               transitions={True :'FWD', False:'REV2FWD'})
+                               transitions={True :'FWD', False:'REV2FWD','ESTOP':'STATIC'})
         smach.StateMachine.add('OBS', OBS(), 
-                               transitions={'CLEAR':'FWD', False:'OBS'})
+                               transitions={'CLEAR':'FWD', False:'OBS','ESTOP':'STATIC'})
         smach.StateMachine.add('APPROACH_DOCK', APPROACH_DOCK(), 
-                               transitions={'DOCKED':'CHARGING', False:'APPROACH_DOCK'})
+                               transitions={'DOCKED':'CHARGING', False:'APPROACH_DOCK','ESTOP':'STATIC'})
         smach.StateMachine.add('CHARGING', CHARGING(), 
-                               transitions={'CHARGED':'REV', False:'CHARGING'})
+                               transitions={'CHARGED':'REV', False:'CHARGING','ESTOP':'STATIC'})
 
     # Create a thread to execute the smach container
     smach_thread = threading.Thread(target=sm.execute)

@@ -20,7 +20,7 @@ ENC_REV_LIMIT = 1200 # Ticks
 ROBOT_ACCEL = 0.0015 # 0.1% per tick
 START_CHARGING_THRESH = 15100 #mV
 DONE_CHARDING_THRESH = 15300 #mV
-BATTERY_CHARGING_THRESH = 30 #mV - A voltage jump of xmV is needed to detect as charged
+BATTERY_CHARGING_THRESH = 60 #mV - A voltage jump of xmV is needed to detect as charged
 
 #Global Variables
 rfBackGlobal = 999 #inch
@@ -30,21 +30,21 @@ batGlobal = 0 #ticks
 currRobotSpeed = 0.0 # %motor
 voltageBeforeCharging = 99999 #mV
 switchGlobal = False #this can be used by adding an button on the bot and having that start or stop the state machine
-
+manualGlobal = False
 
 # define state Static
 class Static(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['ON', 'OFF'])
         self.switch = switchGlobal
+        robotSpeedPub.publish(0)
 
     def execute(self, userdata):
         statePub.publish("Robot Disabled")
         self.switch = switchGlobal
-        if self.switch:
+        if self.switch and (not manualGlobal):
             return 'ON'   #switch to Move State
         else:
-            robotSpeedPub.publish(0)
             return 'OFF'
 
 
@@ -60,7 +60,7 @@ class FWD(smach.State):
     def execute(self, userdata):
         statePub.publish("Patrolling Forwards")
         self.switch = switchGlobal
-        if not self.switch:
+        if (not self.switch) or manualGlobal:
             return 'ESTOP'
         self.encReading = encGlobal
         self.rfReading = rfFrontGlobal
@@ -156,6 +156,7 @@ class OBS(smach.State):
         rospy.sleep(0.26)
         flashLightPub.publish(False)
         rospy.sleep(0.26)
+        flashLightPub.publish(False)
 
         if self.rfReading > APPROACH_DIST:
             return 'CLEAR' 
@@ -167,6 +168,7 @@ class APPROACH_DOCK(smach.State):
         smach.State.__init__(self, outcomes=['DOCKED', False,'ESTOP'])
         rospy.sleep(1) #sleep to let battery voltage normalize before recording
         globals()['voltageBeforeCharging'] = batGlobal
+        self.prevVoltage = 99999
     def execute(self, userdata):
         statePub.publish("Apporaching Dock")
         self.switch = switchGlobal
@@ -182,9 +184,10 @@ class APPROACH_DOCK(smach.State):
         else:
             robotSpeedPub.publish(PATRAOL_FWD_SPEED)
 
-        if self.batReading > voltageBeforeCharging + BATTERY_CHARGING_THRESH:
+        if self.batReading > self.prevVoltage + BATTERY_CHARGING_THRESH:
             return 'DOCKED'
 
+        self.prevVoltage = self.batReading
         return False
         
 
@@ -226,6 +229,10 @@ def SwitchCallback(msg):
     globals()['switchGlobal'] = msg.data
     # rospy.loginfo("Encoder Callback")
 
+def ManualCallback(msg):
+    globals()['manualGlobal'] = msg.data
+    # rospy.loginfo("Encoder Callback")
+
 
 # Subscribers
 rospy.Subscriber("/rangefinder/front", Float32 , RfFrontCallback)
@@ -233,6 +240,7 @@ rospy.Subscriber("/rangefinder/back", Float32, RfBackCallback)
 rospy.Subscriber("/encoder", Float32, EncCallback)
 rospy.Subscriber("/battery", BatteryState, BatCallback)
 rospy.Subscriber("/switch", Bool, SwitchCallback)
+rospy.Subscriber("/manual_override", Bool, ManualCallback)
 
 # Publishers
 robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)

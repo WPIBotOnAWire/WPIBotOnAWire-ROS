@@ -1,8 +1,9 @@
 
 <launch>
-  <node name="serial_node" pkg="rosserial_python" type="serial_node.py">
-    <param name="port" value="/dev/ttyACM0"/>
+  <node name="serial_node" pkg="rosserial_python" type="serial_node.py" output="screen">
+    <param name="port" value="/dev/ttyACM1"/>
   </node>
   <node name="sound_node" pkg="sound_node" type="play.py"/>
-  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/> 
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
+  <node pkg="rostopic" type="rostopic" name="rostopic_node" args="pub /robot_state std_msgs/String 'data: &quot;Connected - No State&quot;'" output="screen"/>
 </launch>

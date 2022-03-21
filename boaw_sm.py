@@ -177,7 +177,7 @@ class APPROACH_DOCK(smach.State):
         rospy.loginfo('Bat Voltage: '+str(self.batReading))
         rospy.loginfo('Enc Reading: '+str(self.encReading))
         rospy.loginfo('Waiting for: '+str(voltageBeforeCharging+BATTERY_CHARGING_THRESH))
-        if(self.encReading < ENC_FWD_LIMIT):
+        if(self.encReading > ENC_FWD_LIMIT):
             robotSpeedPub.publish(APPROACH_FWD_SPEED)
         else:
             robotSpeedPub.publish(PATRAOL_FWD_SPEED)

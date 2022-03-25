@@ -90,11 +90,11 @@ Depends on:
 
 # Hardware
 ![](wiring.png)
-### Hardware Troubleshooting
-- BMS Activation
-- BMS Per cell voltage check
-- Small gear about to break
-- Center of mass too high
+### Hardware Troubleshooting (TODO More Explanation)
+- Is the BMS board not providing any voltage even though the battery is plugged in and is charged? Make sure to activate the BMS board by connecting a power supply to the magnetic charging connectors to 'active' it. More explanation on the Amazon reviews for the product page.
+- If the BMS provides a weird voltage like 2S (8V )or 3S (12V), make sure to check the inputs of the BMS to make sure all cells are balanced. 
+- PLA gears on the drive train are starting to chip due to manual driving of the robot for fun. Reprint more from teh GrabCAD or consider CNC milling some spur gears.
+- The Center of mass of the robot is still too high. Add a weight at the bottom or reduce the weight from the top. We did this in Demo 4 by strapping a dumbbell to the bottom. 
 
 
 # Weird things that could be fixed

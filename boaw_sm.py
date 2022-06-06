@@ -18,7 +18,8 @@ STOP_DIST = 10 #inches
 ENC_FWD_LIMIT = 20000 # Ticks
 ENC_REV_LIMIT = -40000 # Ticks
 ROBOT_ACCEL = 0.0000001 # 0.1% per tick
-START_CHARGING_THRESH = 15050 #mV
+# original start thresh = 15050 mV
+START_CHARGING_THRESH = 10000 #mV
 DONE_CHARDING_THRESH = 15300 #mV
 BATTERY_CHARGING_THRESH = 100 #mV - A voltage jump of xmV is needed to detect as charged
 

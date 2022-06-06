@@ -35,7 +35,7 @@ Depends on:
 ### Connecting and Install
 
 1. Power on the Jetson without a keybaord or display.
-2. Open up a terminal from a laptop **on the same network as the Jetson** and run the command `ssh (ubuntu username)@(static IP or hostname)`. For example: `ssh botonawire@hjetson1-botonawire.dyn.wpi.edu`
+2. Open up a terminal from a laptop **on the same network as the Jetson** and run the command `ssh (ubuntu username)@(static IP or hostname)`. For example: `ssh botonawire@jetson1-botonawire.dyn.wpi.edu`
 3. Enter the password you used to log into the Jetson.
 #### You can skip the rest of this section if you are using the Jetson we already setup.
 4. Make sure [ROS noetic](http://wiki.ros.org/noetic/Installation/Ubuntu) and all dependencies are installed (using rosdep is recommended but manually with sudo apt-get is ok too.

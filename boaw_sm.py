@@ -30,7 +30,7 @@ encGlobal = 0 #ticks
 batGlobal = 0 #ticks
 currRobotSpeed = 0.0 # %motor
 voltageBeforeCharging = 99999 #mV
-switchGlobal = False #this can be used by adding an button on the bot and having that start or stop the state machine
+switchGlobal = True #this can be used by adding an button on the bot and having that start or stop the state machine
 manualGlobal = False
 
 # define state Static

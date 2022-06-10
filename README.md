@@ -89,7 +89,7 @@ Depends on:
 | Other [Rosbridge](http://wiki.ros.org/rosbridge_suite) Topics   | various       |Launch file rosbridge_server  | Unused, but could be used to see if the Mobile UI is still connected. 
 
 # Hardware
-![](wiring.png)
+![](updatedWiring.png)
 ### Hardware Troubleshooting (TODO More Explanation)
 - Is the BMS board not providing any voltage even though the battery is plugged in and is charged? Make sure to activate the BMS board by connecting a power supply to the magnetic charging connectors to 'active' it. More explanation on the Amazon reviews for the product page.
 - If the BMS provides a weird voltage like 2S (8V )or 3S (12V), make sure to check the inputs of the BMS to make sure all cells are balanced. 

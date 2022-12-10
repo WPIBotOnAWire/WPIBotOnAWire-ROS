@@ -30,6 +30,22 @@ def show_webcam(mirror=False):
         if(prediction == "Raven"):
             rospy.loginfo("Raven Detected")
             soundPub.publish(4000)
+            flashLightPub.publish(True)
+            rospy.sleep(1)
+            flashLightPub.publish(False)
+            rospy.sleep(1)
+            flashLightPub.publish(True)
+            rospy.sleep(1)
+            flashLightPub.publish(False)
+            rospy.sleep(1)
+            flashLightPub.publish(True)
+            rospy.sleep(1)
+            flashLightPub.publish(False)
+            rospy.sleep(1)
+            flashLightPub.publish(True)
+            rospy.sleep(1)
+            flashLightPub.publish(False)
+            rospy.sleep(1)
 
         font = cv2.FONT_HERSHEY_PLAIN
         cv2.putText(img, 

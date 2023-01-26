@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import cv2
 import roslib
 import rospy
 import smach
@@ -11,7 +11,8 @@ import tensorflow as tf
 import os
 from PIL import Image
 import numpy as np
-import cv2
+import time
+
 
 
 
@@ -19,46 +20,7 @@ import cv2
 flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
 soundPub = rospy.Publisher('/play_sound', Int32, queue_size=10)
 
-def show_webcam(mirror=False):
-    cam = cv2.VideoCapture(0)
-    while True:
-        ret_val, img = cam.read()
-        if mirror: 
-            img = cv2.flip(img, 1)
-        prediction = str(check_image(img))
-        
-        if(prediction == "Raven"):
-            rospy.loginfo("Raven Detected")
-            soundPub.publish(4000)
-            flashLightPub.publish(True)
-            rospy.sleep(1)
-            flashLightPub.publish(False)
-            rospy.sleep(1)
-            flashLightPub.publish(True)
-            rospy.sleep(1)
-            flashLightPub.publish(False)
-            rospy.sleep(1)
-            flashLightPub.publish(True)
-            rospy.sleep(1)
-            flashLightPub.publish(False)
-            rospy.sleep(1)
-            flashLightPub.publish(True)
-            rospy.sleep(1)
-            flashLightPub.publish(False)
-            rospy.sleep(1)
-
-        font = cv2.FONT_HERSHEY_PLAIN
-        cv2.putText(img, 
-            prediction, 
-            (50, 50), 
-            font, 3, 
-            (0, 255, 255), 
-            2, 
-            cv2.LINE_4)
-        cv2.imshow('webcam feed', img)
-        if cv2.waitKey(1000) == 27: 
-            break  # esc to quit
-    cv2.destroyAllWindows()
+latest_image = []
 
 def check_image(image):
     graph_def = tf.compat.v1.GraphDef()
@@ -108,25 +70,6 @@ def check_image(image):
         h, w = image.shape[:2]
         return cv2.resize(image, (256, 256), interpolation = cv2.INTER_LINEAR)
 
-    def update_orientation(image):
-        exif_orientation_tag = 0x0112
-        if hasattr(image, '_getexif'):
-            exif = image._getexif()
-            if (exif != None and exif_orientation_tag in exif):
-                orientation = exif.get(exif_orientation_tag, 1)
-                # orientation is 1 based, shift to zero based and flip/transpose based on 0-based values
-                orientation -= 1
-                if orientation >= 4:
-                    image = image.transpose(Image.TRANSPOSE)
-                if orientation == 2 or orientation == 3 or orientation == 6 or orientation == 7:
-                    image = image.transpose(Image.FLIP_TOP_BOTTOM)
-                if orientation == 1 or orientation == 2 or orientation == 5 or orientation == 6:
-                    image = image.transpose(Image.FLIP_LEFT_RIGHT)
-        return image
-
-
-    # Update orientation based on EXIF tags, if the file has orientation info.
-    image = update_orientation(image)
 
     # Convert to OpenCV format
     #image = convert_to_opencv(image)
@@ -175,24 +118,80 @@ def check_image(image):
 
     # Print the highest probability label
         highest_probability_index = np.argmax(predictions)
-        #print('Classified as: ' + labels[highest_probability_index])
-        #print()
+        print('Classified as: ' + labels[highest_probability_index])
+        print()
 
         # Or you can print out all of the results mapping labels to probabilities.
         label_index = 0
         for p in predictions:
             truncated_probablity = np.float64(np.round(p,8))
             #print ("Prediction %: " + labels[label_index], truncated_probablity)
-            #print("Prediction: " + str(truncated_probablity[1]) + " raven.")
+            print("Prediction: " + str(truncated_probablity[1]) + " raven.")
             label_index += 1  
-    return labels[highest_probability_index]
+    return [labels[highest_probability_index], str(truncated_probablity[1])]
 
-def main():
-    rospy.init_node('BOAW_SM')
-    show_webcam()
-    rospy.spin()
-
+def capture_frames():
+    cam = cv2.VideoCapture(0)
+    print("video is starting, please wait")
+    time.sleep(3)
+    print("video live, executing program")
+    while True:
+        global latest_image
+        ret_val, img = cam.read()
+        latest_image = img
+        #cv2.imshow('webcam feed', img)
+        if cv2.waitKey(1) == 27: 
+            cam.release()
+            cv2.destroyAllWindows()
+ 
+def process_image():
+    time.sleep(5)
+    while True:
+        tic = time.perf_counter()
+        prediction_data = str(check_image(latest_image))
+        prediction = prediction_data[0]
+        certianty = prediction_data[1]
+        toc = time.perf_counter()
+        print(prediction_data)
+        print(f"Processed in {toc - tic:0.4f} seconds")
+        if(prediction == "Raven"):
+            print("Deterring")
+            #rospy.loginfo("Raven Detected")
+            # soundPub.publish(4000)
+            # flashLightPub.publish(True)
+            # rospy.sleep(1)
+            # flashLightPub.publish(False)
+            # rospy.sleep(1)
+            # flashLightPub.publish(True)
+            # rospy.sleep(1)
+            # flashLightPub.publish(False)
+            # rospy.sleep(1)
+            # flashLightPub.publish(True)
+            # rospy.sleep(1)
+            # flashLightPub.publish(False)
+            # rospy.sleep(1)
+            # flashLightPub.publish(True)
+            # rospy.sleep(1)
+            # flashLightPub.publish(False)
+            # rospy.sleep(1)
 
 if __name__ == '__main__':
-    main()
+    # creating thread
+    rospy.init_node('BOAW_SM')
+    cam_thread = threading.Thread(target=capture_frames)
+    ai_thread = threading.Thread(target=process_image)
+ 
+    # starting thread 1
+    cam_thread.start()
+    # starting thread 2
+    ai_thread.start()
+ 
+    # wait until thread 1 is completely executed
+    cam_thread.join()
+    # wait until thread 2 is completely executed
+    ai_thread.join()
+ 
+    # both threads completely executed
+    print("Done!")
+    
 

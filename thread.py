@@ -1,22 +1,16 @@
+# Python program to illustrate the concept
+# of threading
+# importing the threading module
 import tensorflow as tf
 import os
 from PIL import Image
 import numpy as np
+import threading
+import time
 import cv2
 
-def show_webcam(mirror=False):
-    cam = cv2.VideoCapture(0)
-    while True:
-        ret_val, img = cam.read()
-        if mirror: 
-            img = cv2.flip(img, 1)
-        cv2.imshow('webcam feed', img)
-        prediction = str(check_image(img))
-        print(prediction)
-
-        if cv2.waitKey(50) == 27: 
-            break  # esc to quit
-    cv2.destroyAllWindows()
+ 
+latest_image = []
 
 def check_image(image):
     graph_def = tf.compat.v1.GraphDef()
@@ -126,4 +120,49 @@ def check_image(image):
             label_index += 1  
     return labels[highest_probability_index]
 
-show_webcam()
+
+
+
+def capture_frames():
+    cam = cv2.VideoCapture(0)
+    print("video is starting, please wait")
+    time.sleep(3)
+    print("video live, executing program")
+    while True:
+        global latest_image
+        ret_val, img = cam.read()
+        latest_image = img
+        #cv2.imshow('webcam feed', img)
+        if cv2.waitKey(1) == 27: 
+            cam.release()
+            cv2.destroyAllWindows()
+ 
+def process_image():
+    time.sleep(5)
+    while True:
+        tic = time.perf_counter()
+        prediction = str(check_image(latest_image))
+        toc = time.perf_counter()
+
+        print(prediction)
+        print(f"Processed in {toc - tic:0.4f} seconds")
+        time.sleep(1)
+ 
+ 
+if __name__ =="__main__":
+    # creating thread
+    cam_thread = threading.Thread(target=capture_frames,)
+    ai_thread = threading.Thread(target=process_image)
+ 
+    # starting thread 1
+    cam_thread.start()
+    # starting thread 2
+    ai_thread.start()
+ 
+    # wait until thread 1 is completely executed
+    cam_thread.join()
+    # wait until thread 2 is completely executed
+    ai_thread.join()
+ 
+    # both threads completely executed
+    print("Done!")

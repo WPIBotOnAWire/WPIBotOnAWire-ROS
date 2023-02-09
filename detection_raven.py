@@ -102,8 +102,8 @@ def run(filename, labels_filename):
             # Print the highest probability label
             highest_probability_index = np.argmax(predictions)
             print('Classified as: ' + labels[highest_probability_index])
-            print("Raven Probability: " + str(predictions[highest_probability_index][1]))
-            print(f"Processed in {toc - tic:0.4f} seconds")
+            # print("Raven Probability: " + str(predictions))
+            # print(f"Processed in {toc - tic:0.4f} seconds")
             print("------------------------------")
 
             if cv2.waitKey(50) == 27: 

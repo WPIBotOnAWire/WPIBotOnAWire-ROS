@@ -3,6 +3,10 @@ import os
 from PIL import Image
 import numpy as np
 import cv2
+import time
+import warnings
+warnings.filterwarnings('ignore') 
+
 
 def show_webcam(mirror=False):
     cam = cv2.VideoCapture(0)
@@ -11,8 +15,11 @@ def show_webcam(mirror=False):
         if mirror: 
             img = cv2.flip(img, 1)
         cv2.imshow('webcam feed', img)
+        tic = time.perf_counter()
         prediction = str(check_image(img))
+        toc = time.perf_counter()
         print(prediction)
+        print(f"Processed in {toc - tic:0.4f} seconds")
 
         if cv2.waitKey(50) == 27: 
             break  # esc to quit
@@ -90,13 +97,13 @@ def check_image(image):
     # Crop the center for the specified network_input_Size
     augmented_image = crop_center(augmented_image, network_input_size, network_input_size)
 
-    # Get the input size of the model
-    with tf.compat.v1.Session() as sess:
-        input_tensor_shape = sess.graph.get_tensor_by_name('Placeholder:0').shape.as_list()
-    network_input_size = input_tensor_shape[1]
+    # # Get the input size of the model
+    # with tf.compat.v1.Session() as sess:
+    #     input_tensor_shape = sess.graph.get_tensor_by_name('Placeholder:0').shape.as_list()
+    # network_input_size = input_tensor_shape[1]
 
-    # Crop the center for the specified network_input_Size
-    augmented_image = crop_center(augmented_image, network_input_size, network_input_size)
+    # # Crop the center for the specified network_input_Size
+    # augmented_image = crop_center(augmented_image, network_input_size, network_input_size)
 
 
     # These names are part of the model and cannot be changed.

@@ -38,7 +38,9 @@ def record_bird_reaction(video_output):
             print("RECORDING BIRD REACTION 10s")
             ret_val, image = cam.read()
             cv2.imshow('webcam feed', image)
-            video_output.write(image) #write frame to video output
+            stat = shutil.disk_usage(path)
+            if(stat.used < storage_size_max):
+                video_output.write(image) #write frame to video output
         
 def fire_deterrents():
     print("Deterring")
@@ -143,7 +145,9 @@ def run(filename, labels_filename):
 
             ret_val, image = cam.read()
             cv2.imshow('webcam feed', image)
-            video_output.write(image) #write frame to video output
+            stat = shutil.disk_usage(path)
+            if(stat.used < storage_size_max):
+                video_output.write(image) #write frame to video output
 
             # Convert to OpenCV format
             #image = convert_to_opencv(image)
@@ -183,11 +187,7 @@ def run(filename, labels_filename):
             #print("Raven Probability: " + str(predictions))
             print(f"Processed in {toc - tic:0.4f} seconds")
             print("------------------------------")
-            #stat = shutil.disk_usage(path)
   
-            # Print disk usage statistics
-            #print("Disk usage statistics:")
-            #print(stat)
 
             #Limits deterrents to only fire every 5 seconds
             tic2 = time.perf_counter()

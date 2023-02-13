@@ -9,6 +9,8 @@ import roslib
 import rospy
 import smach
 import smach_ros
+import shutil
+import datetime
 from std_msgs.msg import Float32, Bool, String, Int32
 from sensor_msgs.msg import BatteryState
 import os
@@ -22,7 +24,12 @@ warnings.filterwarnings('ignore')
 flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
 soundPub = rospy.Publisher('/play_sound', Int32, queue_size=10)
 
-time_last_fired = 0;
+#Globals
+time_last_fired = 0
+#path = '~/media/jack/VM2GB' #path to the video storage drive
+path = '/catkin_ws/src/WPIBotOnAWire-ROS/video_out/'
+storage_size_max = 2018082816 #maximum storage size in bytes, watchdog stops saving videos when the storage is this full
+
 
 def fire_deterrents():
     print("Deterring")
@@ -73,6 +80,9 @@ def resize_down_to_1600_max_dim(image):
 def resize_to_256_square(image):
     h, w = image.shape[:2]
     return cv2.resize(image, (256, 256), interpolation = cv2.INTER_LINEAR)
+    
+def get_timestamp(fname, fmt='%Y-%m-%d-%H-%M-%S_{fname}'):
+    return datetime.datetime.now().strftime(fmt).format(fname=fname)
 
 def run(filename, labels_filename):
     graph_def = tf.compat.v1.GraphDef()
@@ -101,11 +111,25 @@ def run(filename, labels_filename):
         network_input_size = input_tensor_shape[1]
 
     cam = cv2.VideoCapture(0)
+
+    #initalize video output
+    frame_width = int(cam.get(3))
+    frame_height = int(cam.get(4))
+
     with tf.compat.v1.Session() as sess:
+        watchdog_ready = True #flipflop for if watchdog is ready to record
+        
         while True:
+            if(watchdog_ready):
+                watchdog_ready = False
+                video_begin = time.perf_counter()
+                filename = get_timestamp('.avi')
+                filename = '/media/jack/VM2GB/' + str(filename)
+                video_output = out = cv2.VideoWriter(filename,cv2.VideoWriter_fourcc(*'MJPG'), 10, (frame_width,frame_height))
+
             ret_val, image = cam.read()
             cv2.imshow('webcam feed', image)
-
+            video_output.write(image) #write frame to video output
 
             # Convert to OpenCV format
             #image = convert_to_opencv(image)
@@ -125,7 +149,10 @@ def run(filename, labels_filename):
 
             # Crop the center for the specified network_input_Size
             augmented_image = crop_center(augmented_image, network_input_size, network_input_size)
-
+            
+            #Watchdog Camera
+            
+            #Tensorflow processes
             try:
                 tic = time.perf_counter()
                 prob_tensor = sess.graph.get_tensor_by_name(output_layer)
@@ -142,14 +169,33 @@ def run(filename, labels_filename):
             #print("Raven Probability: " + str(predictions))
             print(f"Processed in {toc - tic:0.4f} seconds")
             print("------------------------------")
+            #stat = shutil.disk_usage(path)
+  
+            # Print disk usage statistics
+            #print("Disk usage statistics:")
+            #print(stat)
+
+            #Limits deterrents to only fire every 5 seconds
             tic2 = time.perf_counter()
             global time_last_fired
             elapsed_time = tic2 - time_last_fired
-            print(elapsed_time)
-            if(elapsed_time > 5):
-                if(str(labels[highest_probability_index]) == 'Raven'):
+        
+            #Fires deterrents if they have not been fired in at least 5 seconds
+            if(str(labels[highest_probability_index]) == 'Raven'): #possibly reverse 185+186 line (this line 185)
+                if(elapsed_time > 5):
                     fire_deterrents()
                     time_last_fired = time.perf_counter()
+                    video_output.release()
+                    watchdog_ready = True
+            else:
+                print(time.perf_counter() - video_begin)
+                if(time.perf_counter() - video_begin > 10):
+                    print("Dumping Video, no raven detected after 10s")
+                    video_output.release()
+                    os.remove(filename)
+                    watchdog_ready = True
+                
+
 
             	
             if cv2.waitKey(50) == 27: 

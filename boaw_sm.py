@@ -17,6 +17,7 @@ import os
 from PIL import Image
 import numpy as np
 import time
+import threading
 
 warnings.filterwarnings('ignore') 
 
@@ -29,28 +30,44 @@ time_last_fired = 0
 #path = '~/media/jack/VM2GB' #path to the video storage drive
 path = '/catkin_ws/src/WPIBotOnAWire-ROS/video_out/'
 storage_size_max = 2018082816 #maximum storage size in bytes, watchdog stops saving videos when the storage is this full
+cam = cv2.VideoCapture(0)
 
-
+def record_bird_reaction(video_output):
+        start_time = time.perf_counter()
+        while(time.perf_counter()-start_time < 10):
+            print("RECORDING BIRD REACTION 10s")
+            ret_val, image = cam.read()
+            cv2.imshow('webcam feed', image)
+            video_output.write(image) #write frame to video output
+        
 def fire_deterrents():
     print("Deterring")
-    #rospy.loginfo("Raven Detected")
+    rospy.loginfo("Raven Detected")
     soundPub.publish(4000)
-    # flashLightPub.publish(True)
-    # rospy.sleep(1)
-    # flashLightPub.publish(False)
-    # rospy.sleep(1)
-    # flashLightPub.publish(True)
-    # rospy.sleep(1)
-    # flashLightPub.publish(False)
-    # rospy.sleep(1)
-    # flashLightPub.publish(True)
-    # rospy.sleep(1)
-    # flashLightPub.publish(False)
-    # rospy.sleep(1)
-    # flashLightPub.publish(True)
-    # rospy.sleep(1)
-    # flashLightPub.publish(False)
-    # rospy.sleep(1)
+    flashLightPub.publish(True)
+    time.sleep(1)
+    flashLightPub.publish(False)
+    time.sleep(1)
+    flashLightPub.publish(True)
+    time.sleep(1)
+    flashLightPub.publish(False)
+    time.sleep(1)
+    flashLightPub.publish(True)
+    time.sleep(1)
+    flashLightPub.publish(False)
+    time.sleep(1)
+    flashLightPub.publish(True)
+    time.sleep(1)
+    flashLightPub.publish(False)
+    time.sleep(10)
+
+def deter_birds(video_output):
+    deterrent_thread = threading.Thread(target = fire_deterrents)
+    #video_thread = threading.Thread(target=fire_deterrents)
+    deterrent_thread.start()
+    record_bird_reaction(video_output)
+    deterrent_thread.join()
+    #video_thread.join()
 
 def show_webcam(mirror=False):
         if mirror: 
@@ -110,22 +127,19 @@ def run(filename, labels_filename):
         input_tensor_shape = sess.graph.get_tensor_by_name(input_node).shape.as_list()
         network_input_size = input_tensor_shape[1]
 
-    cam = cv2.VideoCapture(0)
-
     #initalize video output
     frame_width = int(cam.get(3))
     frame_height = int(cam.get(4))
 
     with tf.compat.v1.Session() as sess:
         watchdog_ready = True #flipflop for if watchdog is ready to record
-        
         while True:
             if(watchdog_ready):
                 watchdog_ready = False
                 video_begin = time.perf_counter()
                 filename = get_timestamp('.avi')
                 filename = '/media/jack/VM2GB/' + str(filename)
-                video_output = out = cv2.VideoWriter(filename,cv2.VideoWriter_fourcc(*'MJPG'), 10, (frame_width,frame_height))
+                video_output = cv2.VideoWriter(filename,cv2.VideoWriter_fourcc(*'MJPG'), 10, (frame_width,frame_height))
 
             ret_val, image = cam.read()
             cv2.imshow('webcam feed', image)
@@ -183,9 +197,11 @@ def run(filename, labels_filename):
             #Fires deterrents if they have not been fired in at least 5 seconds
             if(str(labels[highest_probability_index]) == 'Raven'): #possibly reverse 185+186 line (this line 185)
                 if(elapsed_time > 5):
-                    fire_deterrents()
+                    deter_birds(video_output)
                     time_last_fired = time.perf_counter()
                     video_output.release()
+                    print("DONE")
+                    time.sleep(3)
                     watchdog_ready = True
             else:
                 print(time.perf_counter() - video_begin)

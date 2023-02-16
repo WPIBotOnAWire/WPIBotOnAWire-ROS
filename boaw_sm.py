@@ -28,8 +28,8 @@ soundPub = rospy.Publisher('/play_sound', Int32, queue_size=10)
 #Globals
 time_last_fired = 0
 #path = '~/media/jack/VM2GB' #path to the video storage drive
-path = '/catkin_ws/src/WPIBotOnAWire-ROS/video_out/'
-storage_size_max = 2018082816 #maximum storage size in bytes, watchdog stops saving videos when the storage is this full
+path = '/media/jack/USB321FD/'
+storage_size_max = 500000000000 #maximum storage size in bytes, watchdog stops saving videos when the storage is this full
 cam = cv2.VideoCapture(0)
 
 def record_bird_reaction(video_output):
@@ -38,9 +38,7 @@ def record_bird_reaction(video_output):
             print("RECORDING BIRD REACTION 10s")
             ret_val, image = cam.read()
             cv2.imshow('webcam feed', image)
-            stat = shutil.disk_usage(path)
-            if(stat.used < storage_size_max):
-                video_output.write(image) #write frame to video output
+            video_output.write(image) #write frame to video output
         
 def fire_deterrents():
     print("Deterring")
@@ -135,19 +133,18 @@ def run(filename, labels_filename):
 
     with tf.compat.v1.Session() as sess:
         watchdog_ready = True #flipflop for if watchdog is ready to record
-        while True:
+        while (shutil.disk_usage(path).used < storage_size_max): #run birdbox until disk is full
             if(watchdog_ready):
                 watchdog_ready = False
                 video_begin = time.perf_counter()
                 filename = get_timestamp('.avi')
-                filename = '/media/jack/VM2GB/' + str(filename)
+                filename = '/media/jack/USB321FD/' + str(filename)
                 video_output = cv2.VideoWriter(filename,cv2.VideoWriter_fourcc(*'MJPG'), 10, (frame_width,frame_height))
 
             ret_val, image = cam.read()
             cv2.imshow('webcam feed', image)
             stat = shutil.disk_usage(path)
-            if(stat.used < storage_size_max):
-                video_output.write(image) #write frame to video output
+            video_output.write(image) #write frame to video output
 
             # Convert to OpenCV format
             #image = convert_to_opencv(image)

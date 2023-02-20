@@ -205,7 +205,10 @@ def run(filename, labels_filename):
                 if(time.perf_counter() - video_begin > 10):
                     print("Dumping Video, no raven detected after 10s")
                     video_output.release()
-                    os.remove(filename)
+                    try:
+                        os.remove(filename)
+                    except:
+                        print("Delete Error")
                     watchdog_ready = True
                 
 

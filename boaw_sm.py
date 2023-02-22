@@ -189,7 +189,7 @@ def run(filename, labels_filename):
             tic2 = time.perf_counter()
             global time_last_fired
             elapsed_time = tic2 - time_last_fired
-        
+        #
             #Fires deterrents if they have not been fired in at least 5 seconds
             if(str(labels[highest_probability_index]) == 'Raven'): #possibly reverse 185+186 line (this line 185)
                 if(elapsed_time > 5):

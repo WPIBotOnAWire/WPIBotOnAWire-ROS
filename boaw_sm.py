@@ -27,47 +27,55 @@ soundPub = rospy.Publisher('/play_sound', Int32, queue_size=10)
 
 #Globals
 time_last_fired = 0
+front_rangefinder = -999999999
 #path = '~/media/jack/VM2GB' #path to the video storage drive
-path = '/media/jack/USB321FD/'
+path = ''   
 storage_size_max = 500000000000 #maximum storage size in bytes, watchdog stops saving videos when the storage is this full
 cam = cv2.VideoCapture(0)
 
-def record_bird_reaction(video_output):
-        start_time = time.perf_counter()
-        while(time.perf_counter()-start_time < 10):
-            print("RECORDING BIRD REACTION 10s")
-            ret_val, image = cam.read()
-            cv2.imshow('webcam feed', image)
-            video_output.write(image) #write frame to video output
-        
+
+def RfFrontCallback(msg):
+    #print("booga")
+    global front_rangefinder
+    # assign rangefinder reading
+    #rospy.logwarn(msg)
+    front_rangefinder = msg.data * 1000
+    #print(front_rangefinder)
+    # rospy.loginfo("Front RF Callback")
+
+rospy.Subscriber("/rangefinder/front", Float32 , RfFrontCallback)
+robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
+
+def drive_to_bird():
+    while(front_rangefinder < 400):
+        print("RANGE")
+        print(front_rangefinder)
+    deter_birds()
+
 def fire_deterrents():
     print("Deterring")
     rospy.loginfo("Raven Detected")
     soundPub.publish(4000)
     flashLightPub.publish(True)
-    time.sleep(1)
+    time.sleep(0.1)
     flashLightPub.publish(False)
-    time.sleep(1)
+    time.sleep(0.1)
     flashLightPub.publish(True)
-    time.sleep(1)
+    time.sleep(0.1)
     flashLightPub.publish(False)
-    time.sleep(1)
+    time.sleep(0.1)
     flashLightPub.publish(True)
-    time.sleep(1)
+    time.sleep(0.1)
     flashLightPub.publish(False)
-    time.sleep(1)
+    time.sleep(0.1)
     flashLightPub.publish(True)
-    time.sleep(1)
+    time.sleep(0.1)
     flashLightPub.publish(False)
-    time.sleep(10)
 
-def deter_birds(video_output):
+def deter_birds():
     deterrent_thread = threading.Thread(target = fire_deterrents)
-    #video_thread = threading.Thread(target=fire_deterrents)
     deterrent_thread.start()
-    record_bird_reaction(video_output)
     deterrent_thread.join()
-    #video_thread.join()
 
 def show_webcam(mirror=False):
         if mirror: 
@@ -133,18 +141,9 @@ def run(filename, labels_filename):
 
     with tf.compat.v1.Session() as sess:
         watchdog_ready = True #flipflop for if watchdog is ready to record
-        while (shutil.disk_usage(path).used < storage_size_max): #run birdbox until disk is full
-            if(watchdog_ready):
-                watchdog_ready = False
-                video_begin = time.perf_counter()
-                filename = get_timestamp('.avi')
-                filename = '/media/jack/USB321FD/' + str(filename)
-                video_output = cv2.VideoWriter(filename,cv2.VideoWriter_fourcc(*'MJPG'), 10, (frame_width,frame_height))
-
+        while (1): #run birdbox until disk is full
             ret_val, image = cam.read()
             cv2.imshow('webcam feed', image)
-            stat = shutil.disk_usage(path)
-            video_output.write(image) #write frame to video output
 
             # Convert to OpenCV format
             #image = convert_to_opencv(image)
@@ -180,10 +179,10 @@ def run(filename, labels_filename):
 
             # Print the highest probability label
             highest_probability_index = np.argmax(predictions)
-            print('Classified as: ' + labels[highest_probability_index])
+            #print('Classified as: ' + labels[highest_probability_index])
             #print("Raven Probability: " + str(predictions))
-            print(f"Processed in {toc - tic:0.4f} seconds")
-            print("------------------------------")
+            #print(f"Processed in {toc - tic:0.4f} seconds")
+            #print("------------------------------")
   
 
             #Limits deterrents to only fire every 5 seconds
@@ -194,24 +193,11 @@ def run(filename, labels_filename):
             #Fires deterrents if they have not been fired in at least 5 seconds
             if(str(labels[highest_probability_index]) == 'Raven'): #possibly reverse 185+186 line (this line 185)
                 if(elapsed_time > 5):
-                    deter_birds(video_output)
+                    robotSpeedPub.publish(1400)
+                    drive_to_bird()
                     time_last_fired = time.perf_counter()
-                    video_output.release()
                     print("DONE")
                     time.sleep(3)
-                    watchdog_ready = True
-            else:
-                print(time.perf_counter() - video_begin)
-                if(time.perf_counter() - video_begin > 10):
-                    print("Dumping Video, no raven detected after 10s")
-                    video_output.release()
-                    try:
-                        os.remove(filename)
-                    except:
-                        print("Delete Error")
-                    watchdog_ready = True
-                
-
 
             	
             if cv2.waitKey(50) == 27: 
@@ -223,6 +209,3 @@ if __name__ == "__main__":
     filename = "model.pb"
     labels_filename = "labels.txt"
     run(filename, labels_filename)
-
-    
-

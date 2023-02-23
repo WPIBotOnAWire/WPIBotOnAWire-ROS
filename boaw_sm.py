@@ -28,7 +28,7 @@ soundPub = rospy.Publisher('/play_sound', Int32, queue_size=10)
 #Globals
 time_last_fired = 0
 #path = '~/media/jack/VM2GB' #path to the video storage drive
-path = '/media/jack/USB321FD/'
+path = '/media/jack/VM2GB/'
 storage_size_max = 500000000000 #maximum storage size in bytes, watchdog stops saving videos when the storage is this full
 cam = cv2.VideoCapture(0)
 
@@ -134,82 +134,86 @@ def run(filename, labels_filename):
     with tf.compat.v1.Session() as sess:
         watchdog_ready = True #flipflop for if watchdog is ready to record
         while (shutil.disk_usage(path).used < storage_size_max): #run birdbox until disk is full
-            if(watchdog_ready):
-                watchdog_ready = False
-                video_begin = time.perf_counter()
-                filename = get_timestamp('.avi')
-                filename = '/media/jack/USB321FD/' + str(filename)
-                video_output = cv2.VideoWriter(filename,cv2.VideoWriter_fourcc(*'MJPG'), 10, (frame_width,frame_height))
+            now = datetime.datetime.now()
+            current_time = now.strftime("%H")
+            print("Current Time =", current_time)
+            if(int(current_time) > 8 and int(current_time) < 17):
+                if(watchdog_ready):
+                    watchdog_ready = False
+                    video_begin = time.perf_counter()
+                    filename = get_timestamp('.avi')
+                    filename = '/media/jack/VM2GB/' + str(filename)
+                    video_output = cv2.VideoWriter(filename,cv2.VideoWriter_fourcc(*'MJPG'), 10, (frame_width,frame_height))
 
-            ret_val, image = cam.read()
-            cv2.imshow('webcam feed', image)
-            stat = shutil.disk_usage(path)
-            video_output.write(image) #write frame to video output
+                ret_val, image = cam.read()
+                cv2.imshow('webcam feed', image)
+                stat = shutil.disk_usage(path)
+                video_output.write(image) #write frame to video output
 
-            # Convert to OpenCV format
-            #image = convert_to_opencv(image)
+                # Convert to OpenCV format
+                #image = convert_to_opencv(image)
 
-            # If the image has either w or h greater than 1600 we resize it down respecting
-            # aspect ratio such that the largest dimension is 1600
-            image = resize_down_to_1600_max_dim(image)
+                # If the image has either w or h greater than 1600 we resize it down respecting
+                # aspect ratio such that the largest dimension is 1600
+                image = resize_down_to_1600_max_dim(image)
 
-           # We next get the largest center square
-            h, w = image.shape[:2]
-            min_dim = min(w,h)
-            max_square_image = crop_center(image, min_dim, min_dim)
+            # We next get the largest center square
+                h, w = image.shape[:2]
+                min_dim = min(w,h)
+                max_square_image = crop_center(image, min_dim, min_dim)
 
-            # Resize that square down to 256x256
-            augmented_image = resize_to_256_square(max_square_image)
+                # Resize that square down to 256x256
+                augmented_image = resize_to_256_square(max_square_image)
 
 
-            # Crop the center for the specified network_input_Size
-            augmented_image = crop_center(augmented_image, network_input_size, network_input_size)
+                # Crop the center for the specified network_input_Size
+                augmented_image = crop_center(augmented_image, network_input_size, network_input_size)
+                
+                #Watchdog Camera
+                
+                #Tensorflow processes
+                try:
+                    tic = time.perf_counter()
+                    prob_tensor = sess.graph.get_tensor_by_name(output_layer)
+                    predictions = sess.run(prob_tensor, {input_node: [augmented_image] })
+                    toc = time.perf_counter()
+                except KeyError:
+                    print ("Couldn't find classification output layer: " + output_layer + ".")
+                    print ("Verify this a model exported from an Object Detection project.")
+                    exit(-1)
+
+                # Print the highest probability label
+                highest_probability_index = np.argmax(predictions)
+                print('Classified as: ' + labels[highest_probability_index])
+                #print("Raven Probability: " + str(predictions))
+                print(f"Processed in {toc - tic:0.4f} seconds")
+                print("------------------------------")
+    
+
+                #Limits deterrents to only fire every 5 seconds
+                tic2 = time.perf_counter()
+                global time_last_fired
+                elapsed_time = tic2 - time_last_fired
             
-            #Watchdog Camera
-            
-            #Tensorflow processes
-            try:
-                tic = time.perf_counter()
-                prob_tensor = sess.graph.get_tensor_by_name(output_layer)
-                predictions = sess.run(prob_tensor, {input_node: [augmented_image] })
-                toc = time.perf_counter()
-            except KeyError:
-                print ("Couldn't find classification output layer: " + output_layer + ".")
-                print ("Verify this a model exported from an Object Detection project.")
-                exit(-1)
-
-            # Print the highest probability label
-            highest_probability_index = np.argmax(predictions)
-            print('Classified as: ' + labels[highest_probability_index])
-            #print("Raven Probability: " + str(predictions))
-            print(f"Processed in {toc - tic:0.4f} seconds")
-            print("------------------------------")
-  
-
-            #Limits deterrents to only fire every 5 seconds
-            tic2 = time.perf_counter()
-            global time_last_fired
-            elapsed_time = tic2 - time_last_fired
-        
-            #Fires deterrents if they have not been fired in at least 5 seconds
-            if(str(labels[highest_probability_index]) == 'Raven'): #possibly reverse 185+186 line (this line 185)
-                if(elapsed_time > 5):
-                    deter_birds(video_output)
-                    time_last_fired = time.perf_counter()
-                    video_output.release()
-                    print("DONE")
-                    time.sleep(3)
-                    watchdog_ready = True
-            else:
-                print(time.perf_counter() - video_begin)
-                if(time.perf_counter() - video_begin > 10):
-                    print("Dumping Video, no raven detected after 10s")
-                    video_output.release()
-                    try:
-                        os.remove(filename)
-                    except:
-                        print("Delete Error")
-                    watchdog_ready = True
+                #Fires deterrents if they have not been fired in at least 5 seconds
+                if(str(labels[highest_probability_index]) == 'Raven'): #possibly reverse 185+186 line (this line 185)
+                    if(elapsed_time > 5):
+                        deter_birds(video_output)
+                        time_last_fired = time.perf_counter()
+                        video_output.release()
+                        print("DONE")
+                        time.sleep(3)
+                        watchdog_ready = True
+                else:
+                    print(time.perf_counter() - video_begin)
+                    if(time.perf_counter() - video_begin > 10):
+                        print("Dumping Video, no raven detected after 10s")
+                        video_output.release()
+                        try:
+                            os.remove(filename)
+                        except:
+                            print("Delete Error")
+                        watchdog_ready = True
                 
 
 

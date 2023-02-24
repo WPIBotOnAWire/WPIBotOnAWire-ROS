@@ -137,7 +137,7 @@ def run(filename, labels_filename):
             now = datetime.datetime.now()
             current_time = now.strftime("%H")
             print("Current Time =", current_time)
-            if(int(current_time) > 8 and int(current_time) < 17):
+            if(int(current_time) >= 8 and int(current_time) < 17):
                 if(watchdog_ready):
                     watchdog_ready = False
                     video_begin = time.perf_counter()

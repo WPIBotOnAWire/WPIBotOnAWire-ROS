@@ -51,6 +51,7 @@ def drive_to_bird():
         print("RANGE")
         print(front_rangefinder)
     deter_birds()
+    
 
 def fire_deterrents():
     print("Deterring")

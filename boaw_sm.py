@@ -93,7 +93,7 @@ class REV(smach.State):
         if not self.switch:
             return 'ESTOP'
         self.encReading = encGlobal
-        rospy.loginfo('Encorder: '+str(self.encReading))
+        rospy.loginfo('Encoder: '+str(self.encReading))
         if(self.encReading < ENC_REV_LIMIT):
             currRobotSpeed = PATRAOL_REV_SPEED
             return 'ENC_LIM'

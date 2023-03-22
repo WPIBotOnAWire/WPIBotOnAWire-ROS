@@ -33,6 +33,7 @@ switchGlobal = False #this can be used by adding an button on the bot and having
 manualGlobal = False
 
 # define state Static
+# this state is when the robot is disabled or in teleop mode
 class Static(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['ON', 'OFF'])
@@ -50,6 +51,7 @@ class Static(smach.State):
 
 
 # define state Move
+# in this state the robot is moving along the wire
 class FWD(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP'])
@@ -100,6 +102,7 @@ class REV(smach.State):
         robotSpeedPub.publish(PATRAOL_REV_SPEED)
         return False
 
+# transition state allowing robot to come to a full stop
 class FWD2REV(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=[True, False,'ESTOP'])
@@ -117,6 +120,7 @@ class FWD2REV(smach.State):
             return True
         return False
 
+# transition state allowing robot to come to a full stop
 class REV2FWD(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=[True, False,'ESTOP'])
@@ -134,6 +138,7 @@ class REV2FWD(smach.State):
             return True
         return False
 
+# this state is triggered when a bird is detected while the robot is in forward
 class OBS(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['CLEAR', False,'ESTOP'])

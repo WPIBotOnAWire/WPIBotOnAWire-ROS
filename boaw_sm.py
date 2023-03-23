@@ -9,9 +9,9 @@ from sensor_msgs.msg import BatteryState
 import threading
 
 #Constants
-PATRAOL_FWD_SPEED = -0.13 #10% motor power
+PATROL_FWD_SPEED = -0.13 #10% motor power
 APPROACH_FWD_SPEED = -0.17 #7% motor speed
-PATRAOL_REV_SPEED = 0.11 #10% motor power
+PATROL_REV_SPEED = 0.11 #10% motor power
 APPROACH_REV_SPEED = 0.07 #7% motor speed
 APPROACH_DIST = 40 #inches
 STOP_DIST = 10 #inches
@@ -29,7 +29,7 @@ encGlobal = 0 #ticks
 batGlobal = 0 #ticks
 currRobotSpeed = 0.0 # %motor
 voltageBeforeCharging = 99999 #mV
-switchGlobal = False #this can be used by adding an button on the bot and having that start or stop the state machine
+switchGlobal = True #this can be used by adding an button on the bot and having that start or stop the state machine
 manualGlobal = False
 
 # define state Static
@@ -44,6 +44,8 @@ class Static(smach.State):
         if not manualGlobal:
             robotSpeedPub.publish(1500)
         if self.switch and (not manualGlobal):
+            rospy.loginfo("BEEP BOOP MOVING STATES")
+            rospy.sleep(5)
             return 'ON'   #switch to Move State
         else:
             return 'OFF'
@@ -57,7 +59,7 @@ class FWD(smach.State):
         smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP'])
         self.rfReading = rfFrontGlobal
         self.encReading = encGlobal
-        robotSpeedPub.publish(PATRAOL_FWD_SPEED)
+        robotSpeedPub.publish(PATROL_FWD_SPEED)
 
     def execute(self, userdata):
         statePub.publish("Patrolling Forwards")
@@ -71,7 +73,7 @@ class FWD(smach.State):
         rospy.loginfo('FrontRF: '+str(self.rfReading))
         rospy.loginfo('Encorder: '+str(self.encReading))
         if(self.encReading > ENC_FWD_LIMIT):
-            currRobotSpeed = PATRAOL_FWD_SPEED
+            currRobotSpeed = PATROL_FWD_SPEED
             return 'ENC_LIM'
 
         if(self.rfReading < APPROACH_DIST):
@@ -81,14 +83,14 @@ class FWD(smach.State):
         if(self.batReading < START_CHARGING_THRESH):
             return 'BAT_LOW'
 
-        robotSpeedPub.publish(PATRAOL_FWD_SPEED)
+        robotSpeedPub.publish(PATROL_FWD_SPEED)
         return False
 
 class REV(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['ENC_LIM', False,'ESTOP'])
         self.encReading = encGlobal
-        robotSpeedPub.publish(PATRAOL_REV_SPEED)
+        robotSpeedPub.publish(PATROL_REV_SPEED)
     def execute(self, userdata):
         statePub.publish("Patrolling Backwards")
         self.switch = switchGlobal
@@ -97,9 +99,9 @@ class REV(smach.State):
         self.encReading = encGlobal
         rospy.loginfo('Encoder: '+str(self.encReading))
         if(self.encReading < ENC_REV_LIMIT):
-            currRobotSpeed = PATRAOL_REV_SPEED
+            currRobotSpeed = PATROL_REV_SPEED
             return 'ENC_LIM'
-        robotSpeedPub.publish(PATRAOL_REV_SPEED)
+        robotSpeedPub.publish(PATROL_REV_SPEED)
         return False
 
 # transition state allowing robot to come to a full stop
@@ -116,7 +118,7 @@ class FWD2REV(smach.State):
         robotSpeedPub.publish(currRobotSpeed)
         rospy.loginfo('current speed: '+str(currRobotSpeed))
         globals()['currRobotSpeed'] = currRobotSpeed - ROBOT_ACCEL
-        if currRobotSpeed <= PATRAOL_REV_SPEED:
+        if currRobotSpeed <= PATROL_REV_SPEED:
             return True
         return False
 
@@ -134,7 +136,7 @@ class REV2FWD(smach.State):
         robotSpeedPub.publish(currRobotSpeed)
         globals()['currRobotSpeed'] = currRobotSpeed + ROBOT_ACCEL
         rospy.loginfo('current speed: '+str(currRobotSpeed))
-        if currRobotSpeed >= PATRAOL_FWD_SPEED:
+        if currRobotSpeed >= PATROL_FWD_SPEED:
             return True
         return False
 
@@ -190,7 +192,7 @@ class APPROACH_DOCK(smach.State):
             robotSpeedPub.publish(0)
             rospy.sleep(0.15)
         else:
-            robotSpeedPub.publish(PATRAOL_FWD_SPEED)
+            robotSpeedPub.publish(PATROL_FWD_SPEED)
         if self.batReading > self.prevVoltage + BATTERY_CHARGING_THRESH:
             return 'DOCKED'
 
@@ -211,7 +213,7 @@ class CHARGING(smach.State):
         rospy.loginfo('Bat Voltage: '+str(self.batReading))
         robotSpeedPub.publish(0)
         if self.batReading > DONE_CHARDING_THRESH:
-            robotSpeedPub.publish(PATRAOL_REV_SPEED * 1.1)
+            robotSpeedPub.publish(PATROL_REV_SPEED * 1.1)
             rospy.sleep(0.5)
             return 'CHARGED'
 

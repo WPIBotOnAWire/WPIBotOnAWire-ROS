@@ -42,7 +42,7 @@ class Static(smach.State):
         statePub.publish("Robot Disabled")
         self.switch = switchGlobal
         if not manualGlobal:
-            robotSpeedPub.publish(0)
+            robotSpeedPub.publish(1500)
         if self.switch and (not manualGlobal):
             return 'ON'   #switch to Move State
         else:

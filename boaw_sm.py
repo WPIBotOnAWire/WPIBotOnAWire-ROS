@@ -199,7 +199,25 @@ class APPROACH_DOCK(smach.State):
         self.prevVoltage = self.batReading
         return False
         
+class TEST(smach.State):
+    #beep beep
+    #blink blink
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['DONE', False])
+    def execute(self, userdata):
+        statePub.publish("Charging")
+        self.switch = switchGlobal
+        if not self.switch:
+            return 'ESTOP'
+        self.batReading = batGlobal
+        rospy.loginfo('Bat Voltage: '+str(self.batReading))
+        robotSpeedPub.publish(0)
+        if self.batReading > DONE_CHARDING_THRESH:
+            robotSpeedPub.publish(PATROL_REV_SPEED * 1.1)
+            rospy.sleep(0.5)
+            return 'CHARGED'
 
+        return False
         
 class CHARGING(smach.State):
     def __init__(self):
@@ -270,7 +288,7 @@ def main():
     with sm:
         # Add states to the container
         smach.StateMachine.add('STATIC', Static(), 
-                               transitions={'ON':'FWD', 'OFF':'STATIC'})
+                               transitions={'ON':'FWD', 'OFF':'STATIC', 'TEST_MODE':'TEST'})
         smach.StateMachine.add('FWD', FWD(), 
                                transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'OBS','BAT_LOW':'APPROACH_DOCK','ESTOP':'STATIC'} )
         smach.StateMachine.add('FWD2REV', FWD2REV(), 
@@ -285,6 +303,8 @@ def main():
                                transitions={'DOCKED':'CHARGING', False:'APPROACH_DOCK','ESTOP':'STATIC'})
         smach.StateMachine.add('CHARGING', CHARGING(), 
                                transitions={'CHARGED':'REV', False:'CHARGING','ESTOP':'STATIC'})
+        smach.StateMachine.add('TEST', CHARGING(), 
+                        transitions={'DONE':'STATIC', False:'TEST'})
 
     # Create a thread to execute the smach container
     smach_thread = threading.Thread(target=sm.execute)

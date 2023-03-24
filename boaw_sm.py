@@ -9,10 +9,11 @@ from sensor_msgs.msg import BatteryState
 import threading
 
 #Constants
-PATROL_FWD_SPEED = -0.13 #10% motor power
-APPROACH_FWD_SPEED = -0.17 #7% motor speed
-PATROL_REV_SPEED = 0.11 #10% motor power
-APPROACH_REV_SPEED = 0.07 #7% motor speed
+
+PATROL_FWD_SPEED = -50
+APPROACH_FWD_SPEED = -30
+PATROL_REV_SPEED = 50
+APPROACH_REV_SPEED = 30
 APPROACH_DIST = 1 #meters
 STOP_DIST = .25 #meters
 ENC_FWD_LIMIT = 20000 # Ticks

@@ -13,8 +13,8 @@ PATROL_FWD_SPEED = -0.13 #10% motor power
 APPROACH_FWD_SPEED = -0.17 #7% motor speed
 PATROL_REV_SPEED = 0.11 #10% motor power
 APPROACH_REV_SPEED = 0.07 #7% motor speed
-APPROACH_DIST = 40 #inches
-STOP_DIST = 10 #inches
+APPROACH_DIST = 1 #meters
+STOP_DIST = .25 #meters
 ENC_FWD_LIMIT = 20000 # Ticks
 ENC_REV_LIMIT = -40000 # Ticks
 ROBOT_ACCEL = 0.0000001 # 0.1% per tick
@@ -42,7 +42,7 @@ class Static(smach.State):
         statePub.publish("Robot Disabled")
         self.switch = switchGlobal
         if not manualGlobal:
-            robotSpeedPub.publish(1500)
+            robotSpeedPub.publish(0)
         if self.switch and (not manualGlobal):
             rospy.loginfo("BEEP BOOP MOVING STATES")
             rospy.sleep(5)
@@ -198,7 +198,8 @@ class APPROACH_DOCK(smach.State):
 
         self.prevVoltage = self.batReading
         return False
-        
+
+#This blinks LEDs and plays sounds to test the deterrents        
 class TEST(smach.State):
     #beep beep
     #blink blink

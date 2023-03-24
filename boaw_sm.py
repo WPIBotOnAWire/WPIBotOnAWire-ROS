@@ -30,8 +30,9 @@ encGlobal = 0 #ticks
 batGlobal = 0 #ticks
 currRobotSpeed = 0.0 # %motor
 voltageBeforeCharging = 99999 #mV
-switchGlobal = True #this can be used by adding an button on the bot and having that start or stop the state machine
+switchGlobal = False #this can be used by adding an button on the bot and having that start or stop the state machine
 manualGlobal = False
+aiGlobal = False
 
 # define state Static
 # this state is when the robot is disabled or in teleop mode
@@ -264,6 +265,10 @@ def ManualCallback(msg):
     globals()['manualGlobal'] = msg.data
     # rospy.loginfo("Encoder Callback")
 
+def aiCallback(msg):
+    globals()['aiGlobal'] = msg.data
+    rospy.loginfo(rospy.get_caller_id() + "AI Detected: %s", msg.data)
+
 
 # Subscribers
 rospy.Subscriber("/rangefinder/front", Float32 , RfFrontCallback)
@@ -272,12 +277,14 @@ rospy.Subscriber("/encoder", Float32, EncCallback)
 rospy.Subscriber("/battery", BatteryState, BatCallback)
 rospy.Subscriber("/switch", Bool, SwitchCallback)
 rospy.Subscriber("/manual_override", Bool, ManualCallback)
+rospy.Subscriber("ai_detection", Bool, aiCallback)
 
 # Publishers
 robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
 flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
 soundPub = rospy.Publisher('/play_sound', Int32, queue_size=10)
 statePub = rospy.Publisher('/robot_state', String, queue_size=10)
+
 
 
 def main():
@@ -290,7 +297,7 @@ def main():
     with sm:
         # Add states to the container
         smach.StateMachine.add('STATIC', Static(), 
-                               transitions={'ON':'FWD', 'OFF':'STATIC', 'TEST_MODE':'TEST'})
+                               transitions={'ON':'FWD', 'OFF':'STATIC'})
         smach.StateMachine.add('FWD', FWD(), 
                                transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'OBS','BAT_LOW':'APPROACH_DOCK','ESTOP':'STATIC'} )
         smach.StateMachine.add('FWD2REV', FWD2REV(), 
@@ -305,8 +312,6 @@ def main():
                                transitions={'DOCKED':'CHARGING', False:'APPROACH_DOCK','ESTOP':'STATIC'})
         smach.StateMachine.add('CHARGING', CHARGING(), 
                                transitions={'CHARGED':'REV', False:'CHARGING','ESTOP':'STATIC'})
-        smach.StateMachine.add('TEST', CHARGING(), 
-                        transitions={'DONE':'STATIC', False:'TEST'})
 
     # Create a thread to execute the smach container
     smach_thread = threading.Thread(target=sm.execute)
@@ -325,4 +330,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
+
 

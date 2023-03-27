@@ -26,11 +26,11 @@ BATTERY_CHARGING_THRESH = 100 #mV - A voltage jump of xmV is needed to detect as
 #Global Variables
 rfBackGlobal = 999 #inch
 rfFrontGlobal = 999 #inch
-encGlobal = 0 #ticks
+encGlobal = -1 #ticks
 batGlobal = 0 #ticks
 currRobotSpeed = 0.0 # %motor
 voltageBeforeCharging = 99999 #mV
-switchGlobal = False #this can be used by adding an button on the bot and having that start or stop the state machine
+switchGlobal = True #this can be used by adding an button on the bot and having that start or stop the state machine
 manualGlobal = False
 aiGlobal = False
 
@@ -46,8 +46,6 @@ class Static(smach.State):
         if not manualGlobal:
             robotSpeedPub.publish(0)
         if self.switch and (not manualGlobal):
-            rospy.loginfo("BEEP BOOP MOVING STATES")
-            rospy.sleep(5)
             return 'ON'   #switch to Move State
         else:
             return 'OFF'
@@ -71,10 +69,11 @@ class FWD(smach.State):
         self.encReading = encGlobal
         self.rfReading = rfFrontGlobal
         self.batReading = batGlobal
-        rospy.loginfo('Batt: '+str(self.batReading))
-        rospy.loginfo('FrontRF: '+str(self.rfReading))
+        #rospy.loginfo('Batt: '+str(self.batReading))
+        #rospy.loginfo('FrontRF: '+str(self.rfReading))
         rospy.loginfo('Encorder: '+str(self.encReading))
-        if(self.encReading > ENC_FWD_LIMIT):
+        #if(self.encReading > ENC_FWD_LIMIT):
+        if(self.encReading > -9999999999999):
             currRobotSpeed = PATROL_FWD_SPEED
             return 'ENC_LIM'
 
@@ -82,8 +81,8 @@ class FWD(smach.State):
             robotSpeedPub.publish(0)
             return 'RF_LIM'
 
-        if(self.batReading < START_CHARGING_THRESH):
-            return 'BAT_LOW'
+        #if(self.batReading < START_CHARGING_THRESH):
+         #   return 'BAT_LOW'
 
         robotSpeedPub.publish(PATROL_FWD_SPEED)
         return False
@@ -273,7 +272,7 @@ def aiCallback(msg):
 # Subscribers
 rospy.Subscriber("/rangefinder/front", Float32 , RfFrontCallback)
 rospy.Subscriber("/rangefinder/back", Float32, RfBackCallback)
-rospy.Subscriber("/encoder", Float32, EncCallback)
+rospy.Subscriber("/encoder", Int32, EncCallback)
 rospy.Subscriber("/battery", BatteryState, BatCallback)
 rospy.Subscriber("/switch", Bool, SwitchCallback)
 rospy.Subscriber("/manual_override", Bool, ManualCallback)

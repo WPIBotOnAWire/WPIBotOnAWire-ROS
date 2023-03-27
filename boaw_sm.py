@@ -1,212 +1,334 @@
-import tensorflow as tf
-import os
-from PIL import Image
-import numpy as np
-import cv2
-import time
-import warnings
+#!/usr/bin/env python
+
 import roslib
 import rospy
 import smach
 import smach_ros
-import shutil
-import datetime
 from std_msgs.msg import Float32, Bool, String, Int32
 from sensor_msgs.msg import BatteryState
-import os
-from PIL import Image
-import numpy as np
-import time
 import threading
 
-warnings.filterwarnings('ignore') 
+#Constants
 
-# Publishers
-flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
-soundPub = rospy.Publisher('/play_sound', Int32, queue_size=10)
+PATROL_FWD_SPEED = -50
+APPROACH_FWD_SPEED = -30
+PATROL_REV_SPEED = 50
+APPROACH_REV_SPEED = 30
+APPROACH_DIST = 1 #meters
+STOP_DIST = .25 #meters
+ENC_FWD_LIMIT = 20000 # Ticks
+ENC_REV_LIMIT = -40000 # Ticks
+ROBOT_ACCEL = 0.0000001 # 0.1% per tick
+START_CHARGING_THRESH = 15050 #mV
+DONE_CHARDING_THRESH = 15300 #mV
+BATTERY_CHARGING_THRESH = 100 #mV - A voltage jump of xmV is needed to detect as charged
 
-#Globals
-time_last_fired = 0
-front_rangefinder = -999999999
-#path = '~/media/jack/VM2GB' #path to the video storage drive
-path = ''   
-storage_size_max = 500000000000 #maximum storage size in bytes, watchdog stops saving videos when the storage is this full
-cam = cv2.VideoCapture(0)
+#Global Variables
+rfBackGlobal = 999 #inch
+rfFrontGlobal = 999 #inch
+encGlobal = 0 #ticks
+batGlobal = 0 #ticks
+currRobotSpeed = 0.0 # %motor
+voltageBeforeCharging = 99999 #mV
+switchGlobal = True #this can be used by adding an button on the bot and having that start or stop the state machine
+manualGlobal = False
+aiGlobal = False
 
+# define state Static
+# this state is when the robot is disabled or in teleop mode
+class Static(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['ON', 'OFF'])
+        self.switch = switchGlobal
+    def execute(self, userdata):
+        statePub.publish("Robot Disabled")
+        self.switch = switchGlobal
+        if not manualGlobal:
+            robotSpeedPub.publish(0)
+        if self.switch and (not manualGlobal):
+            return 'ON'   #switch to Move State
+        else:
+            return 'OFF'
+
+
+
+# define state Move
+# in this state the robot is moving along the wire
+class FWD(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP'])
+        self.rfReading = rfFrontGlobal
+        self.encReading = encGlobal
+        robotSpeedPub.publish(PATROL_FWD_SPEED)
+
+    def execute(self, userdata):
+        statePub.publish("Patrolling Forwards")
+        self.switch = switchGlobal
+        if (not self.switch) or manualGlobal:
+            return 'ESTOP'
+        self.encReading = encGlobal
+        self.rfReading = rfFrontGlobal
+        self.batReading = batGlobal
+        #rospy.loginfo('Batt: '+str(self.batReading))
+        #rospy.loginfo('FrontRF: '+str(self.rfReading))
+        rospy.loginfo('Encorder: '+str(self.encReading))
+        #if(self.encReading > ENC_FWD_LIMIT):
+        if(self.encReading > -9999999999999):
+            currRobotSpeed = PATROL_FWD_SPEED
+            return 'ENC_LIM'
+
+        if(self.rfReading < APPROACH_DIST):
+            robotSpeedPub.publish(0)
+            return 'RF_LIM'
+
+        #if(self.batReading < START_CHARGING_THRESH):
+         #   return 'BAT_LOW'
+
+        robotSpeedPub.publish(PATROL_FWD_SPEED)
+        return False
+
+class REV(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['ENC_LIM', False,'ESTOP'])
+        self.encReading = encGlobal
+        robotSpeedPub.publish(PATROL_REV_SPEED)
+    def execute(self, userdata):
+        statePub.publish("Patrolling Backwards")
+        self.switch = switchGlobal
+        if not self.switch:
+            return 'ESTOP'
+        self.encReading = encGlobal
+        rospy.loginfo('Encoder: '+str(self.encReading))
+        if(self.encReading < ENC_REV_LIMIT):
+            currRobotSpeed = PATROL_REV_SPEED
+            return 'ENC_LIM'
+        robotSpeedPub.publish(PATROL_REV_SPEED)
+        return False
+
+# transition state allowing robot to come to a full stop
+class FWD2REV(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=[True, False,'ESTOP'])
+        robotSpeedPub.publish(currRobotSpeed)
+
+    def execute(self, userdata):
+        statePub.publish("Changing Directions")
+        self.switch = switchGlobal
+        if not self.switch:
+            return 'ESTOP'
+        robotSpeedPub.publish(currRobotSpeed)
+        rospy.loginfo('current speed: '+str(currRobotSpeed))
+        globals()['currRobotSpeed'] = currRobotSpeed - ROBOT_ACCEL
+        if currRobotSpeed <= PATROL_REV_SPEED:
+            return True
+        return False
+
+# transition state allowing robot to come to a full stop
+class REV2FWD(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=[True, False,'ESTOP'])
+        robotSpeedPub.publish(currRobotSpeed)
+
+    def execute(self, userdata):
+        statePub.publish("Changing Directions")
+        self.switch = switchGlobal
+        if not self.switch:
+            return 'ESTOP'
+        robotSpeedPub.publish(currRobotSpeed)
+        globals()['currRobotSpeed'] = currRobotSpeed + ROBOT_ACCEL
+        rospy.loginfo('current speed: '+str(currRobotSpeed))
+        if currRobotSpeed >= PATROL_FWD_SPEED:
+            return True
+        return False
+
+# this state is triggered when a bird is detected while the robot is in forward
+class OBS(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['CLEAR', False,'ESTOP'])
+        self.rfReading = rfFrontGlobal
+
+    def execute(self, userdata):
+        statePub.publish("Dettering Obstacle")
+        self.switch = switchGlobal
+        if not self.switch:
+            return 'ESTOP'
+        rospy.loginfo('FrontRF: '+str(self.rfReading))
+        self.rfReading = rfFrontGlobal
+         #turn on the the deterrents
+        soundPub.publish(4000)
+        flashLightPub.publish(True)
+        rospy.sleep(0.26)
+        flashLightPub.publish(False)
+        rospy.sleep(0.26)
+        flashLightPub.publish(True)
+        rospy.sleep(0.26)
+        flashLightPub.publish(False)
+        rospy.sleep(0.26)
+        flashLightPub.publish(False)
+
+        if self.rfReading > APPROACH_DIST:
+            return 'CLEAR' 
+           
+        return False
+
+class APPROACH_DOCK(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['DOCKED', False,'ESTOP'])
+        rospy.sleep(1) #sleep to let battery voltage normalize before recording
+        globals()['voltageBeforeCharging'] = batGlobal
+        self.prevVoltage = 99999
+    def execute(self, userdata):
+        statePub.publish("Apporaching Dock")
+        self.switch = switchGlobal
+        if not self.switch:
+            return 'ESTOP'
+        self.batReading = batGlobal
+        self.encReading = encGlobal
+        rospy.loginfo('Bat Voltage: '+str(self.batReading))
+        rospy.loginfo('Enc Reading: '+str(self.encReading))
+        rospy.loginfo('Waiting for: '+str(voltageBeforeCharging+BATTERY_CHARGING_THRESH))
+        if(self.encReading > ENC_FWD_LIMIT):
+            robotSpeedPub.publish(APPROACH_FWD_SPEED)
+            rospy.sleep(0.3)
+            robotSpeedPub.publish(0)
+            rospy.sleep(0.15)
+        else:
+            robotSpeedPub.publish(PATROL_FWD_SPEED)
+        if self.batReading > self.prevVoltage + BATTERY_CHARGING_THRESH:
+            return 'DOCKED'
+
+        self.prevVoltage = self.batReading
+        return False
+
+#This blinks LEDs and plays sounds to test the deterrents        
+class TEST(smach.State):
+    #beep beep
+    #blink blink
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['DONE', False])
+    def execute(self, userdata):
+        statePub.publish("Charging")
+        self.switch = switchGlobal
+        if not self.switch:
+            return 'ESTOP'
+        self.batReading = batGlobal
+        rospy.loginfo('Bat Voltage: '+str(self.batReading))
+        robotSpeedPub.publish(0)
+        if self.batReading > DONE_CHARDING_THRESH:
+            robotSpeedPub.publish(PATROL_REV_SPEED * 1.1)
+            rospy.sleep(0.5)
+            return 'CHARGED'
+
+        return False
+        
+class CHARGING(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['CHARGED', False,'ESTOP'])
+    def execute(self, userdata):
+        statePub.publish("Charging")
+        self.switch = switchGlobal
+        if not self.switch:
+            return 'ESTOP'
+        self.batReading = batGlobal
+        rospy.loginfo('Bat Voltage: '+str(self.batReading))
+        robotSpeedPub.publish(0)
+        if self.batReading > DONE_CHARDING_THRESH:
+            robotSpeedPub.publish(PATROL_REV_SPEED * 1.1)
+            rospy.sleep(0.5)
+            return 'CHARGED'
+
+        return False
 
 def RfFrontCallback(msg):
-    #print("booga")
-    global front_rangefinder
     # assign rangefinder reading
-    #rospy.logwarn(msg)
-    front_rangefinder = msg.data * 1000
-    #print(front_rangefinder)
+    globals()['rfFrontGlobal'] = msg.data
     # rospy.loginfo("Front RF Callback")
 
+def RfBackCallback(msg):
+    globals()['rfBackGlobal'] = msg.data
+    # rospy.loginfo("Back RF Callback")
+
+def EncCallback(msg):
+    globals()['encGlobal'] = msg.data
+    # rospy.loginfo("Encoder Callback")
+
+def BatCallback(msg):
+    globals()['batGlobal'] = msg.voltage
+    # rospy.loginfo("Encoder Callback")
+
+def SwitchCallback(msg):
+    globals()['switchGlobal'] = msg.data
+    # rospy.loginfo("Encoder Callback")
+
+def ManualCallback(msg):
+    globals()['manualGlobal'] = msg.data
+    # rospy.loginfo("Encoder Callback")
+
+def aiCallback(msg):
+    globals()['aiGlobal'] = msg.data
+    rospy.loginfo(rospy.get_caller_id() + "AI Detected: %s", msg.data)
+
+
+# Subscribers
 rospy.Subscriber("/rangefinder/front", Float32 , RfFrontCallback)
+rospy.Subscriber("/rangefinder/back", Float32, RfBackCallback)
+rospy.Subscriber("/encoder", Float32, EncCallback)
+rospy.Subscriber("/battery", BatteryState, BatCallback)
+rospy.Subscriber("/switch", Bool, SwitchCallback)
+rospy.Subscriber("/manual_override", Bool, ManualCallback)
+rospy.Subscriber("ai_detection", Bool, aiCallback)
+
+# Publishers
 robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
-
-def drive_to_bird():
-    while(front_rangefinder < 400):
-        print("RANGE")
-        print(front_rangefinder)
-    deter_birds()
-    
-
-def fire_deterrents():
-    print("Deterring")
-    rospy.loginfo("Raven Detected")
-    soundPub.publish(4000)
-    flashLightPub.publish(True)
-    time.sleep(0.1)
-    flashLightPub.publish(False)
-    time.sleep(0.1)
-    flashLightPub.publish(True)
-    time.sleep(0.1)
-    flashLightPub.publish(False)
-    time.sleep(0.1)
-    flashLightPub.publish(True)
-    time.sleep(0.1)
-    flashLightPub.publish(False)
-    time.sleep(0.1)
-    flashLightPub.publish(True)
-    time.sleep(0.1)
-    flashLightPub.publish(False)
-
-def deter_birds():
-    deterrent_thread = threading.Thread(target = fire_deterrents)
-    deterrent_thread.start()
-    deterrent_thread.join()
-
-def show_webcam(mirror=False):
-        if mirror: 
-            img = cv2.flip(img, 1)
-
-def convert_to_opencv(image):
-    # RGB -> BGR conversion is performed as well.
-    image = image.convert('RGB')
-    r,g,b = np.array(image).T
-    opencv_image = np.array([b,g,r]).transpose()
-    return opencv_image
-
-def crop_center(img,cropx,cropy):
-    h, w = img.shape[:2]
-    startx = w//2-(cropx//2)
-    starty = h//2-(cropy//2)
-    return img[starty:starty+cropy, startx:startx+cropx]
-
-def resize_down_to_1600_max_dim(image):
-    h, w = image.shape[:2]
-    if (h < 1600 and w < 1600):
-        return image
-
-    new_size = (1600 * w // h, 1600) if (h > w) else (1600, 1600 * h // w)
-    return cv2.resize(image, new_size, interpolation = cv2.INTER_LINEAR)
-
-def resize_to_256_square(image):
-    h, w = image.shape[:2]
-    return cv2.resize(image, (256, 256), interpolation = cv2.INTER_LINEAR)
-    
-def get_timestamp(fname, fmt='%Y-%m-%d-%H-%M-%S_{fname}'):
-    return datetime.datetime.now().strftime(fmt).format(fname=fname)
-
-def run(filename, labels_filename):
-    graph_def = tf.compat.v1.GraphDef()
-    labels = []
-
-    # These are set to the default names from exported models, update as needed.
-    # filename = "model.pb"
-    # labels_filename = "labels.txt"
-
-    # Import the TF graph
-    with tf.io.gfile.GFile(filename, 'rb') as f:
-        graph_def.ParseFromString(f.read())
-        tf.import_graph_def(graph_def, name='')
-
-    # Create a list of labels.
-    with open(labels_filename, 'rt') as lf:
-        for l in lf:
-            labels.append(l.strip())
-
-    output_layer = 'loss:0'
-    input_node = 'Placeholder:0'
-
-    with tf.compat.v1.Session() as sess:
-        # Get the input size of the model
-        input_tensor_shape = sess.graph.get_tensor_by_name(input_node).shape.as_list()
-        network_input_size = input_tensor_shape[1]
-
-    #initalize video output
-    frame_width = int(cam.get(3))
-    frame_height = int(cam.get(4))
-
-    with tf.compat.v1.Session() as sess:
-        watchdog_ready = True #flipflop for if watchdog is ready to record
-        while (1): #run birdbox until disk is full
-            ret_val, image = cam.read()
-            cv2.imshow('webcam feed', image)
-
-            # Convert to OpenCV format
-            #image = convert_to_opencv(image)
-
-            # If the image has either w or h greater than 1600 we resize it down respecting
-            # aspect ratio such that the largest dimension is 1600
-            image = resize_down_to_1600_max_dim(image)
-
-           # We next get the largest center square
-            h, w = image.shape[:2]
-            min_dim = min(w,h)
-            max_square_image = crop_center(image, min_dim, min_dim)
-
-            # Resize that square down to 256x256
-            augmented_image = resize_to_256_square(max_square_image)
+flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
+soundPub = rospy.Publisher('/play_sound', Int32, queue_size=10)
+statePub = rospy.Publisher('/robot_state', String, queue_size=10)
 
 
-            # Crop the center for the specified network_input_Size
-            augmented_image = crop_center(augmented_image, network_input_size, network_input_size)
-            
-            #Watchdog Camera
-            
-            #Tensorflow processes
-            try:
-                tic = time.perf_counter()
-                prob_tensor = sess.graph.get_tensor_by_name(output_layer)
-                predictions = sess.run(prob_tensor, {input_node: [augmented_image] })
-                toc = time.perf_counter()
-            except KeyError:
-                print ("Couldn't find classification output layer: " + output_layer + ".")
-                print ("Verify this a model exported from an Object Detection project.")
-                exit(-1)
 
-            # Print the highest probability label
-            highest_probability_index = np.argmax(predictions)
-            #print('Classified as: ' + labels[highest_probability_index])
-            #print("Raven Probability: " + str(predictions))
-            #print(f"Processed in {toc - tic:0.4f} seconds")
-            #print("------------------------------")
-  
-
-            #Limits deterrents to only fire every 5 seconds
-            tic2 = time.perf_counter()
-            global time_last_fired
-            elapsed_time = tic2 - time_last_fired
-        #
-            #Fires deterrents if they have not been fired in at least 5 seconds
-            if(str(labels[highest_probability_index]) == 'Raven'): #possibly reverse 185+186 line (this line 185)
-                if(elapsed_time > 5):
-                    robotSpeedPub.publish(1400)
-                    drive_to_bird()
-                    time_last_fired = time.perf_counter()
-                    print("DONE")
-                    time.sleep(3)
-
-            	
-            if cv2.waitKey(50) == 27: 
-                break  # esc to quit
-        cv2.destroyAllWindows()
-
-if __name__ == "__main__":
+def main():
     rospy.init_node('BOAW_SM')
-    filename = "model.pb"
-    labels_filename = "labels.txt"
-    run(filename, labels_filename)
+
+    # Create a SMACH state machine
+    sm = smach.StateMachine(outcomes=[True, False])
+
+    # Open the container
+    with sm:
+        # Add states to the container
+        smach.StateMachine.add('STATIC', Static(), 
+                               transitions={'ON':'FWD', 'OFF':'STATIC'})
+        smach.StateMachine.add('FWD', FWD(), 
+                               transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'OBS','BAT_LOW':'APPROACH_DOCK','ESTOP':'STATIC'} )
+        smach.StateMachine.add('FWD2REV', FWD2REV(), 
+                               transitions={True :'REV', False:'FWD2REV','ESTOP':'STATIC'})
+        smach.StateMachine.add('REV', REV(), 
+                               transitions={'ENC_LIM' :'REV2FWD', False: 'REV','ESTOP':'STATIC'})
+        smach.StateMachine.add('REV2FWD', REV2FWD(), 
+                               transitions={True :'FWD', False:'REV2FWD','ESTOP':'STATIC'})
+        smach.StateMachine.add('OBS', OBS(), 
+                               transitions={'CLEAR':'FWD', False:'OBS','ESTOP':'STATIC'})
+        smach.StateMachine.add('APPROACH_DOCK', APPROACH_DOCK(), 
+                               transitions={'DOCKED':'CHARGING', False:'APPROACH_DOCK','ESTOP':'STATIC'})
+        smach.StateMachine.add('CHARGING', CHARGING(), 
+                               transitions={'CHARGED':'REV', False:'CHARGING','ESTOP':'STATIC'})
+
+    # Create a thread to execute the smach container
+    smach_thread = threading.Thread(target=sm.execute)
+    smach_thread.start()
+
+    # Wait for ctrl-c
+    rospy.spin()
+
+    # Request the container to preempt
+    my_smach_con.request_preempt()
+
+    # Block until everything is preempted
+    # (you could do something more complicated to get the execution outcome if you want it)
+    smach_thread.join()
+
+
+if __name__ == '__main__':
+    main()
+    
+
+

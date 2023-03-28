@@ -272,7 +272,7 @@ def aiCallback(msg):
 # Subscribers
 rospy.Subscriber("/rangefinder/front", Float32 , RfFrontCallback)
 rospy.Subscriber("/rangefinder/back", Float32, RfBackCallback)
-rospy.Subscriber("/encoder", Float32, EncCallback)
+rospy.Subscriber("/encoder", Int32, EncCallback)
 rospy.Subscriber("/battery", BatteryState, BatCallback)
 rospy.Subscriber("/switch", Bool, SwitchCallback)
 rospy.Subscriber("/manual_override", Bool, ManualCallback)

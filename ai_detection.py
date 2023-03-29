@@ -103,7 +103,7 @@ def check_image(filename, labels_filename):
 #----------------AI ROS PUBLISHER---------------
 def ai_publisher():
     #set up the publisher as ai_detetection
-    pub = rospy.Publisher('ai_detection', Bool, queue_size=10)
+    pub = rospy.Publisher('/ai_detection', Bool, queue_size=10)
     rospy.init_node('ai_pub', anonymous=True)
     rate = rospy.Rate(10) # 10hz
     while not rospy.is_shutdown():

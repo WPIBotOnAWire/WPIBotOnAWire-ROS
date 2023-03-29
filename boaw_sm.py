@@ -56,7 +56,7 @@ class Static(smach.State):
 # in this state the robot is moving along the wire
 class FWD(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP'])
+        smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP', 'DETERRING'])
         self.rfReading = rfFrontGlobal
         self.encReading = encGlobal
         robotSpeedPub.publish(PATROL_FWD_SPEED)
@@ -69,6 +69,7 @@ class FWD(smach.State):
         self.encReading = encGlobal
         self.rfReading = rfFrontGlobal
         self.batReading = batGlobal
+        self.birdDetected = aiGlobal
         #rospy.loginfo('Batt: '+str(self.batReading))
         #rospy.loginfo('FrontRF: '+str(self.rfReading))
         rospy.loginfo('Encorder: '+str(self.encReading))
@@ -83,7 +84,9 @@ class FWD(smach.State):
 
         #if(self.batReading < START_CHARGING_THRESH):
          #   return 'BAT_LOW'
-
+        if(self.birdDetected):
+            robotSpeedPub.publish(0)
+            return 'DETERRING'
         robotSpeedPub.publish(PATROL_FWD_SPEED)
         return False
 
@@ -276,7 +279,7 @@ rospy.Subscriber("/encoder", Int32, EncCallback)
 rospy.Subscriber("/battery", BatteryState, BatCallback)
 rospy.Subscriber("/switch", Bool, SwitchCallback)
 rospy.Subscriber("/manual_override", Bool, ManualCallback)
-rospy.Subscriber("ai_detection", Bool, aiCallback)
+rospy.Subscriber("/ai_detection", Bool, aiCallback)
 
 # Publishers
 robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
@@ -298,7 +301,7 @@ def main():
         smach.StateMachine.add('STATIC', Static(), 
                                transitions={'ON':'FWD', 'OFF':'STATIC'})
         smach.StateMachine.add('FWD', FWD(), 
-                               transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'OBS','BAT_LOW':'APPROACH_DOCK','ESTOP':'STATIC'} )
+                               transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'OBS','BAT_LOW':'APPROACH_DOCK','ESTOP':'STATIC', 'DETERRING': 'OBS'} )
         smach.StateMachine.add('FWD2REV', FWD2REV(), 
                                transitions={True :'REV', False:'FWD2REV','ESTOP':'STATIC'})
         smach.StateMachine.add('REV', REV(), 

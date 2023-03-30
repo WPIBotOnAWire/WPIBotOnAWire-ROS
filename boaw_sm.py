@@ -168,6 +168,7 @@ class OBS(smach.State):
         flashLightPub.publish(False)
         rospy.sleep(0.26)
         flashLightPub.publish(False)
+        aiGlobal = False
 
         if self.rfReading > APPROACH_DIST:
             return 'CLEAR' 

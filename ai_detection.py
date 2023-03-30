@@ -31,7 +31,7 @@ def resize_to_256_square(image):
 
 #----------------AI DETECTION---------------
 #takes and image and checks it for a raven. Is run in a loop.
-cam = cv2.VideoCapture(0)
+cam = cv2.VideoCapture(1)
 def check_image(filename, labels_filename):
     graph_def = tf.compat.v1.GraphDef()
     labels = []

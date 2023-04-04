@@ -34,6 +34,51 @@ switchGlobal = True #this can be used by adding an button on the bot and having 
 manualGlobal = False
 aiGlobal = False
 
+def RfFrontCallback(msg):
+    # assign rangefinder reading
+    globals()['rfFrontGlobal'] = msg.data
+    # rospy.loginfo("Front RF Callback")
+
+def RfBackCallback(msg):
+    globals()['rfBackGlobal'] = msg.data
+    # rospy.loginfo("Back RF Callback")
+
+def EncCallback(msg):
+    globals()['encGlobal'] = msg.data
+    # rospy.loginfo("Encoder Callback")
+
+def BatCallback(msg):
+    globals()['batGlobal'] = msg.voltage
+    # rospy.loginfo("Encoder Callback")
+
+def SwitchCallback(msg):
+    globals()['switchGlobal'] = msg.data
+    # rospy.loginfo("Switch Callback")
+
+def ManualCallback(msg):
+    globals()['manualGlobal'] = msg.data
+    # rospy.loginfo("Encoder Callback")
+
+def aiCallback(msg):
+    globals()['aiGlobal'] = msg.data
+    rospy.loginfo(rospy.get_caller_id() + "AI Detected: %s", msg.data)
+
+
+# Subscribers
+rospy.Subscriber("/rangefinder/front", Float32 , RfFrontCallback)
+rospy.Subscriber("/rangefinder/back", Float32, RfBackCallback)
+rospy.Subscriber("/encoder", Int32, EncCallback)
+rospy.Subscriber("/battery", BatteryState, BatCallback)
+rospy.Subscriber("/switch", Bool, SwitchCallback)
+rospy.Subscriber("/manual_override", Bool, ManualCallback)
+rospy.Subscriber("/ai_detection", Bool, aiCallback)
+
+# Publishers
+robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
+flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
+soundPub = rospy.Publisher('/play_sound', Int32, queue_size=10)
+statePub = rospy.Publisher('/robot_state', String, queue_size=10)
+
 # define state Static
 # this state is when the robot is disabled or in teleop mode
 class Static(smach.State):
@@ -242,50 +287,7 @@ class CHARGING(smach.State):
 
         return False
 
-def RfFrontCallback(msg):
-    # assign rangefinder reading
-    globals()['rfFrontGlobal'] = msg.data
-    # rospy.loginfo("Front RF Callback")
 
-def RfBackCallback(msg):
-    globals()['rfBackGlobal'] = msg.data
-    # rospy.loginfo("Back RF Callback")
-
-def EncCallback(msg):
-    globals()['encGlobal'] = msg.data
-    # rospy.loginfo("Encoder Callback")
-
-def BatCallback(msg):
-    globals()['batGlobal'] = msg.voltage
-    # rospy.loginfo("Encoder Callback")
-
-def SwitchCallback(msg):
-    globals()['switchGlobal'] = msg.data
-    # rospy.loginfo("Switch Callback")
-
-def ManualCallback(msg):
-    globals()['manualGlobal'] = msg.data
-    # rospy.loginfo("Encoder Callback")
-
-def aiCallback(msg):
-    globals()['aiGlobal'] = msg.data
-    rospy.loginfo(rospy.get_caller_id() + "AI Detected: %s", msg.data)
-
-
-# Subscribers
-rospy.Subscriber("/rangefinder/front", Float32 , RfFrontCallback)
-rospy.Subscriber("/rangefinder/back", Float32, RfBackCallback)
-rospy.Subscriber("/encoder", Int32, EncCallback)
-rospy.Subscriber("/battery", BatteryState, BatCallback)
-rospy.Subscriber("/switch", Bool, SwitchCallback)
-rospy.Subscriber("/manual_override", Bool, ManualCallback)
-rospy.Subscriber("/ai_detection", Bool, aiCallback)
-
-# Publishers
-robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
-flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
-soundPub = rospy.Publisher('/play_sound', Int32, queue_size=10)
-statePub = rospy.Publisher('/robot_state', String, queue_size=10)
 
 
 

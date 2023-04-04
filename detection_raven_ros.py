@@ -5,6 +5,8 @@ import numpy as np
 import cv2
 import time
 import warnings
+import rospy
+from std_msgs.msg import String
 warnings.filterwarnings('ignore') 
 
 
@@ -38,6 +40,9 @@ def resize_to_256_square(image):
     return cv2.resize(image, (256, 256), interpolation = cv2.INTER_LINEAR)
 
 def run(filename, labels_filename):
+    pub = rospy.Publisher('chatter', String, queue_size=10)
+    rospy.init_node('talker', anonymous=True)
+
     graph_def = tf.compat.v1.GraphDef()
     labels = []
 
@@ -101,10 +106,12 @@ def run(filename, labels_filename):
 
             # Print the highest probability label
             highest_probability_index = np.argmax(predictions)
-            print('Classified as: ' + labels[highest_probability_index])
-            print("Raven Probability: " + str(predictions[highest_probability_index][1]))
-            print(f"Processed in {toc - tic:0.4f} seconds")
-            print("------------------------------")
+            rospy.loginfo(labels[highest_probability_index])
+            pub.publish(labels[highest_probability_index])
+            #print('Classified as: ' + labels[highest_probability_index])
+            #print("Raven Probability: " + str(predictions[highest_probability_index][1]))
+            #print(f"Processed in {toc - tic:0.4f} seconds")
+            #print("------------------------------")
 
             if cv2.waitKey(50) == 27: 
                 break  # esc to quit
@@ -113,4 +120,8 @@ def run(filename, labels_filename):
 if __name__ == "__main__":
     filename = "model.pb"
     labels_filename = "labels.txt"
-    run(filename, labels_filename)
+    try:
+        run(filename, labels_filename)
+    except rospy.ROSInterruptExeption:
+        pass
+

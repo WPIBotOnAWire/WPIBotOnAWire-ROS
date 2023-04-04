@@ -33,6 +33,7 @@ voltageBeforeCharging = 99999 #mV
 switchGlobal = True #this can be used by adding an button on the bot and having that start or stop the state machine
 manualGlobal = False
 aiGlobal = False
+lasPos = 0;
 
 def RfFrontCallback(msg):
     # assign rangefinder reading
@@ -117,7 +118,7 @@ class FWD(smach.State):
         self.birdDetected = aiGlobal
         #rospy.loginfo('Batt: '+str(self.batReading))
         #rospy.loginfo('FrontRF: '+str(self.rfReading))
-        rospy.loginfo('Encorder: '+str(self.encReading))
+        # rospy.loginfo('Encorder: '+str(self.encReading))
         if(self.encReading > ENC_FWD_LIMIT):
             currRobotSpeed = PATROL_FWD_SPEED
             return 'ENC_LIM'
@@ -147,6 +148,7 @@ class REV(smach.State):
         self.encReading = encGlobal
         if lasPos != self.encReading:
             rospy.loginfo('Encoder: '+str(self.encReading))
+            lasPos = self.encReading
         if(self.encReading < ENC_REV_LIMIT):
             rospy.loginfo('Encoder over limit')
             currRobotSpeed = PATROL_REV_SPEED
@@ -166,7 +168,7 @@ class FWD2REV(smach.State):
         if not self.switch:
             return 'ESTOP'
         robotSpeedPub.publish(currRobotSpeed)
-        rospy.loginfo('current speed: '+str(currRobotSpeed))
+        # rospy.loginfo('current speed: '+str(currRobotSpeed))
         globals()['currRobotSpeed'] = currRobotSpeed - ROBOT_ACCEL
         if currRobotSpeed <= PATROL_REV_SPEED:
             return True
@@ -185,7 +187,7 @@ class REV2FWD(smach.State):
             return 'ESTOP'
         robotSpeedPub.publish(currRobotSpeed)
         globals()['currRobotSpeed'] = currRobotSpeed + ROBOT_ACCEL
-        rospy.loginfo('current speed: '+str(currRobotSpeed))
+        # rospy.loginfo('current speed: '+str(currRobotSpeed))
         if currRobotSpeed >= PATROL_FWD_SPEED:
             return True
         return False

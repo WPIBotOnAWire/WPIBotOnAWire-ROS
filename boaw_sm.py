@@ -17,7 +17,7 @@ APPROACH_REV_SPEED = 30
 APPROACH_DIST = 1 #meters
 STOP_DIST = .25 #meters
 ENC_FWD_LIMIT = 20# Ticks
-ENC_REV_LIMIT = -40000 # Ticks
+ENC_REV_LIMIT = -20 # Ticks
 ROBOT_ACCEL = 0.0000001 # 0.1% per tick
 START_CHARGING_THRESH = 15050 #mV
 DONE_CHARDING_THRESH = 15300 #mV
@@ -261,7 +261,7 @@ def BatCallback(msg):
 
 def SwitchCallback(msg):
     globals()['switchGlobal'] = msg.data
-    # rospy.loginfo("Encoder Callback")
+    # rospy.loginfo("Switch Callback")
 
 def ManualCallback(msg):
     globals()['manualGlobal'] = msg.data

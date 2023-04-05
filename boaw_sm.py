@@ -118,7 +118,7 @@ class FWD(smach.State):
         self.birdDetected = aiGlobal
         #rospy.loginfo('Batt: '+str(self.batReading))
         #rospy.loginfo('FrontRF: '+str(self.rfReading))
-        # rospy.loginfo('Encorder: '+str(self.encReading))
+        rospy.loginfo('Encorder: '+str(self.encReading))
         if(self.encReading > ENC_FWD_LIMIT):
             currRobotSpeed = PATROL_FWD_SPEED
             return 'ENC_LIM'

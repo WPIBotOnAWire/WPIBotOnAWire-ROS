@@ -160,6 +160,7 @@ class REV(smach.State):
         rospy.loginfo('Encoder: '+str(self.encReading))
         if(aiGlobal):
             robotSpeedPub.publish(0)
+            rospy.loginfo('Deter')
             return 'DETERRING'
 
         if(self.encReading < ENC_REV_LIMIT):
@@ -208,7 +209,7 @@ class REV2FWD(smach.State):
 # this state is triggered when a bird is detected while the robot is in forward
 class DETERRING(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['REV','FWD','ESTOP'])
+        smach.State.__init__(self, outcomes=[False, 'REV','FWD','ESTOP'])
         self.rfReading = rfFrontGlobal
 
     def execute(self, userdata):
@@ -236,7 +237,7 @@ class DETERRING(smach.State):
         if self.rfReading > APPROACH_DIST:
             return direction()
            
-        return direction()
+        return False
 
 class APPROACH_DOCK(smach.State):
     def __init__(self):
@@ -330,7 +331,7 @@ def main():
         smach.StateMachine.add('REV2FWD', REV2FWD(), 
                                transitions={True :'FWD', False:'REV2FWD','ESTOP':'STATIC'})
         smach.StateMachine.add('DETERRING', DETERRING(), 
-                               transitions={'FWD':'FWD', 'REV':'REV','ESTOP':'STATIC'})
+                               transitions={False: 'DETERRING','FWD':'FWD', 'REV':'REV','ESTOP':'STATIC'})
         smach.StateMachine.add('APPROACH_DOCK', APPROACH_DOCK(), 
                                transitions={'DOCKED':'CHARGING', False:'APPROACH_DOCK','ESTOP':'STATIC'})
         smach.StateMachine.add('CHARGING', CHARGING(), 

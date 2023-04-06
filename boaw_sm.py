@@ -16,8 +16,8 @@ PATROL_REV_SPEED = 50
 APPROACH_REV_SPEED = 30
 APPROACH_DIST = 1 #meters
 STOP_DIST = .25 #meters
-ENC_FWD_LIMIT = 20# Ticks
-ENC_REV_LIMIT = -20 # Ticks
+ENC_FWD_LIMIT = 300# Ticks
+ENC_REV_LIMIT = -300 # Ticks
 ROBOT_ACCEL = 0.0000001 # 0.1% per tick
 START_CHARGING_THRESH = 15050 #mV
 DONE_CHARDING_THRESH = 15300 #mV
@@ -33,7 +33,8 @@ voltageBeforeCharging = 99999 #mV
 switchGlobal = True #this can be used by adding an button on the bot and having that start or stop the state machine
 manualGlobal = False
 aiGlobal = False
-lasPos = 0;
+forward = True # use this to keep patrolling the wire after DETERRING
+lasPos = 0
 
 def RfFrontCallback(msg):
     # assign rangefinder reading
@@ -63,6 +64,13 @@ def ManualCallback(msg):
 def aiCallback(msg):
     globals()['aiGlobal'] = msg.data
     rospy.loginfo(rospy.get_caller_id() + "AI Detected: %s", msg.data)
+
+def direction():
+    if forward:
+        direction = 'FWD'
+    else: 
+        direction = 'REV'
+    return direction
 
 
 # Subscribers
@@ -110,12 +118,12 @@ class FWD(smach.State):
     def execute(self, userdata):
         statePub.publish("Patrolling Forwards")
         self.switch = switchGlobal
+        direction = True
         if (not self.switch) or manualGlobal:
             return 'ESTOP'
         self.encReading = encGlobal
         self.rfReading = rfFrontGlobal
         self.batReading = batGlobal
-        self.birdDetected = aiGlobal
         #rospy.loginfo('Batt: '+str(self.batReading))
         #rospy.loginfo('FrontRF: '+str(self.rfReading))
         rospy.loginfo('Encorder: '+str(self.encReading))
@@ -129,7 +137,7 @@ class FWD(smach.State):
 
         #if(self.batReading < START_CHARGING_THRESH):
          #   return 'BAT_LOW'
-        if(self.birdDetected):
+        if(aiGlobal):
             robotSpeedPub.publish(0)
             return 'DETERRING'
         robotSpeedPub.publish(PATROL_FWD_SPEED)
@@ -137,17 +145,22 @@ class FWD(smach.State):
 
 class REV(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['ENC_LIM', False,'ESTOP'])
+        smach.State.__init__(self, outcomes=['ENC_LIM', False,'DETERRING','ESTOP'])
         self.encReading = encGlobal
         robotSpeedPub.publish(PATROL_REV_SPEED)
     def execute(self, userdata):
+        forward = False
         statePub.publish("Patrolling Backwards")
         self.switch = switchGlobal
         if not self.switch:
             return 'ESTOP'
         self.encReading = encGlobal
-        rospy.loginfo('Encoder: '+str(self.encReading))
         
+        rospy.loginfo('Encoder: '+str(self.encReading))
+                if(aiGlobal):
+            robotSpeedPub.publish(0)
+            return 'DETERRING'
+
         if(self.encReading < ENC_REV_LIMIT):
             rospy.loginfo('Encoder over limit')
             currRobotSpeed = PATROL_REV_SPEED
@@ -192,19 +205,20 @@ class REV2FWD(smach.State):
         return False
 
 # this state is triggered when a bird is detected while the robot is in forward
-class OBS(smach.State):
+class DETERRING(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['CLEAR', False,'ESTOP'])
+        smach.State.__init__(self, outcomes=['REV','FWD','ESTOP'])
         self.rfReading = rfFrontGlobal
 
     def execute(self, userdata):
-        statePub.publish("Dettering Obstacle")
+        statePub.publish("Deterring")
         self.switch = switchGlobal
         if not self.switch:
             return 'ESTOP'
         rospy.loginfo('FrontRF: '+str(self.rfReading))
         self.rfReading = rfFrontGlobal
          #turn on the the deterrents
+        rospy.loginfo('I blink here')
         soundPub.publish(4000)
         flashLightPub.publish(True)
         rospy.sleep(0.26)
@@ -217,10 +231,11 @@ class OBS(smach.State):
         flashLightPub.publish(False)
         aiGlobal = False
 
+
         if self.rfReading > APPROACH_DIST:
-            return 'CLEAR' 
+            return direction()
            
-        return False
+        return direction()
 
 class APPROACH_DOCK(smach.State):
     def __init__(self):
@@ -306,15 +321,15 @@ def main():
         smach.StateMachine.add('STATIC', Static(), 
                                transitions={'ON':'FWD', 'OFF':'STATIC'})
         smach.StateMachine.add('FWD', FWD(), 
-                               transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'OBS','BAT_LOW':'APPROACH_DOCK','ESTOP':'STATIC', 'DETERRING': 'OBS'} )
+                               transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'DETERRING','BAT_LOW':'APPROACH_DOCK','ESTOP':'STATIC', 'DETERRING': 'DETERRING'} )
         smach.StateMachine.add('FWD2REV', FWD2REV(), 
                                transitions={True :'REV', False:'FWD2REV','ESTOP':'STATIC'})
         smach.StateMachine.add('REV', REV(), 
-                               transitions={'ENC_LIM' :'REV2FWD', False: 'REV','ESTOP':'STATIC'})
+                               transitions={'ENC_LIM' :'REV2FWD', False: 'REV','DETERRING': 'DETERRING', 'ESTOP':'STATIC'})
         smach.StateMachine.add('REV2FWD', REV2FWD(), 
                                transitions={True :'FWD', False:'REV2FWD','ESTOP':'STATIC'})
-        smach.StateMachine.add('OBS', OBS(), 
-                               transitions={'CLEAR':'FWD', False:'OBS','ESTOP':'STATIC'})
+        smach.StateMachine.add('DETERRING', DETERRING(), 
+                               transitions={'FWD':'FWD', 'REV':'REV','ESTOP':'STATIC'})
         smach.StateMachine.add('APPROACH_DOCK', APPROACH_DOCK(), 
                                transitions={'DOCKED':'CHARGING', False:'APPROACH_DOCK','ESTOP':'STATIC'})
         smach.StateMachine.add('CHARGING', CHARGING(), 

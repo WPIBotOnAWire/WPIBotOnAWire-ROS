@@ -40,8 +40,8 @@ def resize_to_256_square(image):
     return cv2.resize(image, (256, 256), interpolation = cv2.INTER_LINEAR)
 
 def run(filename, labels_filename):
-    pub = rospy.Publisher('chatter', String, queue_size=10)
-    rospy.init_node('talker', anonymous=True)
+    pub = rospy.Publisher('/ai_detection', String, queue_size=10)
+    rospy.init_node('ai_pub', anonymous=True)
 
     graph_def = tf.compat.v1.GraphDef()
     labels = []

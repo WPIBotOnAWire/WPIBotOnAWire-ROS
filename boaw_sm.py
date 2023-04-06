@@ -124,6 +124,7 @@ class FWD(smach.State):
         self.encReading = encGlobal
         self.rfReading = rfFrontGlobal
         self.batReading = batGlobal
+        
         #rospy.loginfo('Batt: '+str(self.batReading))
         #rospy.loginfo('FrontRF: '+str(self.rfReading))
         rospy.loginfo('Encorder: '+str(self.encReading))
@@ -157,7 +158,7 @@ class REV(smach.State):
         self.encReading = encGlobal
         
         rospy.loginfo('Encoder: '+str(self.encReading))
-                if(aiGlobal):
+        if(aiGlobal):
             robotSpeedPub.publish(0)
             return 'DETERRING'
 

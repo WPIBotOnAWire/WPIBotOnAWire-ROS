@@ -61,7 +61,10 @@ def ManualCallback(msg):
     # rospy.loginfo("Encoder Callback")
 
 def aiCallback(msg):
-    globals()['aiGlobal'] = msg.data
+    raven = False
+    if msg.data == 'Raven':
+        raven = True
+    globals()['aiGlobal'] = raven
     rospy.loginfo(rospy.get_caller_id() + "AI Detected: %s", msg.data)
 
 
@@ -72,7 +75,7 @@ rospy.Subscriber("/encoder", Int32, EncCallback)
 rospy.Subscriber("/battery", BatteryState, BatCallback)
 rospy.Subscriber("/switch", Bool, SwitchCallback)
 rospy.Subscriber("/manual_override", Bool, ManualCallback)
-rospy.Subscriber("/ai_detection", Bool, aiCallback)
+rospy.Subscriber("/ai_detection",String, aiCallback)
 
 # Publishers
 robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)

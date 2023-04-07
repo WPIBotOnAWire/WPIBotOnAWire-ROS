@@ -40,7 +40,7 @@ def resize_to_256_square(image):
     return cv2.resize(image, (256, 256), interpolation = cv2.INTER_LINEAR)
 
 def run(filename, labels_filename):
-    pub = rospy.Publisher('/ai_detection', Bool, queue_size=10)
+    pub = rospy.Publisher('/ai_detection', String, queue_size=10)
     rospy.init_node('ai_pub', anonymous=True)
 
     graph_def = tf.compat.v1.GraphDef()
@@ -107,13 +107,7 @@ def run(filename, labels_filename):
             # Print the highest probability label
             highest_probability_index = np.argmax(predictions)
             rospy.loginfo(labels[highest_probability_index])
-           
-            val = False
-            if (labels[highest_probability_index]== 'Raven'):
-                val = True
-            rospy.loginfo(val)
-
-            pub.publish(val)
+            pub.publish(labels[highest_probability_index])
             #print('Classified as: ' + labels[highest_probability_index])
             #print("Raven Probability: " + str(predictions[highest_probability_index][1]))
             #print(f"Processed in {toc - tic:0.4f} seconds")
@@ -128,6 +122,6 @@ if __name__ == "__main__":
     labels_filename = "labels.txt"
     try:
         run(filename, labels_filename)
-    # except rospy.ROSInterruptExeption:
-    #     pass
+    except rospy.ROSInterruptExeption:
+        pass
 

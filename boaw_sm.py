@@ -24,8 +24,8 @@ DONE_CHARDING_THRESH = 15300 #mV
 BATTERY_CHARGING_THRESH = 100 #mV - A voltage jump of xmV is needed to detect as charged
 
 #Global Variables
-rfBackGlobal = 999 #inch
-rfFrontGlobal = 999 #inch
+rfBackGlobal = -1 #meter
+rfFrontGlobal = -1 #meter
 encGlobal = -1 #ticks
 batGlobal = 0 #ticks
 currRobotSpeed = 0.0 # %motor

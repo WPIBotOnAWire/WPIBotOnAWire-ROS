@@ -111,7 +111,7 @@ def run(filename, labels_filename):
             val = False
             if (labels[highest_probability_index]== 'Raven'):
                 val = True
-             rospy.loginfo(val)
+            rospy.loginfo(val)
 
             pub.publish(val)
             #print('Classified as: ' + labels[highest_probability_index])

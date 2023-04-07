@@ -14,7 +14,7 @@ PATROL_FWD_SPEED = -50
 APPROACH_FWD_SPEED = -30
 PATROL_REV_SPEED = 50
 APPROACH_REV_SPEED = 30
-APPROACH_DIST = 1 #meters
+APPROACH_DIST = 0.15 #meters
 STOP_DIST = .25 #meters
 ENC_FWD_LIMIT = 300# Ticks
 ENC_REV_LIMIT = -300 # Ticks
@@ -24,8 +24,8 @@ DONE_CHARDING_THRESH = 15300 #mV
 BATTERY_CHARGING_THRESH = 100 #mV - A voltage jump of xmV is needed to detect as charged
 
 #Global Variables
-rfBackGlobal = -1 #meter
-rfFrontGlobal = -1 #meter
+rfBackGlobal = 2 #meter
+rfFrontGlobal = 2 #meter
 encGlobal = -1 #ticks
 batGlobal = 0 #ticks
 currRobotSpeed = 0.0 # %motor

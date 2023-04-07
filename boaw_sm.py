@@ -126,6 +126,7 @@ class FWD(smach.State):
         self.batReading = batGlobal
         
         #rospy.loginfo('Batt: '+str(self.batReading))
+        rospy.loginfo('aiGlobal: '+str(aiGlobal))
         rospy.loginfo('FrontRF: '+str(self.rfReading))
         rospy.loginfo('Encorder: '+str(self.encReading))
         if(self.encReading > ENC_FWD_LIMIT):
@@ -138,7 +139,7 @@ class FWD(smach.State):
 
         #if(self.batReading < START_CHARGING_THRESH):
          #   return 'BAT_LOW'
-        if(aiGlobal):
+        if(aiGlobal == True):
             robotSpeedPub.publish(0)
             return 'DETERRING'
         robotSpeedPub.publish(PATROL_FWD_SPEED)
@@ -237,7 +238,7 @@ class DETERRING(smach.State):
         if self.rfReading > APPROACH_DIST:
             return direction()
            
-        return False
+        return direction()
 
 class APPROACH_DOCK(smach.State):
     def __init__(self):

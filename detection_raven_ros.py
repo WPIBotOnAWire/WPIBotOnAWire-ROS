@@ -128,6 +128,6 @@ if __name__ == "__main__":
     labels_filename = "labels.txt"
     try:
         run(filename, labels_filename)
-    except rospy.ROSInterruptExeption:
-        pass
+    # except rospy.ROSInterruptExeption:
+    #     pass
 

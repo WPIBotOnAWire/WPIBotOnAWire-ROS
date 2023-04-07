@@ -63,10 +63,12 @@ def ManualCallback(msg):
 
 def aiCallback(msg):
     raven = False
+    rospy.loginfo("possible raven: %s", msg.data)
     if msg.data == 'Raven':
+        rospy.loginfo("AM RAVEN: %s", raven)
         raven = True
     globals()['aiGlobal'] = raven
-    rospy.loginfo(rospy.get_caller_id() + "AI Detected: %s", msg.data)
+    # rospy.loginfo(rospy.get_caller_id() + "AI Detected: %s", msg.data)
 
 def direction():
     if forward:

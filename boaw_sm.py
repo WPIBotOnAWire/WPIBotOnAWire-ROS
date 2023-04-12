@@ -153,38 +153,74 @@ class FWD(smach.State):
 class REV(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP', 'DETERRING'])
+        self.rfReading = rfBackGlobal
         self.encReading = encGlobal
         robotSpeedPub.publish(PATROL_REV_SPEED)
 
     def execute(self, userdata):
-        forward = False
-        statePub.publish("Patrolling Backwards")
+        statePub.publish("Patrolling Forwards")
         self.switch = switchGlobal
-        self.rfReading = rfBackGlobal
-        self.encReading = encGlobal
-        if not self.switch:
+        forward = False
+        if (not self.switch) or manualGlobal:
             return 'ESTOP'
-
-        rospy.loginfo('aiGlobal: '+str(aiGlobal))
-        rospy.loginfo('BackRF: '+str(self.rfReading))
-        rospy.loginfo('Encorder: '+str(self.encReading))
+        self.encReading = encGlobal
+        self.rfReading = rfBackGlobal
+        self.batReading = batGlobal
         
-        if(aiGlobal):
-            robotSpeedPub.publish(0)
-            rospy.loginfo('Deter')
-            return 'DETERRING'
+        #rospy.loginfo('Batt: '+str(self.batReading))
+        rospy.loginfo('aiGlobal: '+str(aiGlobal))
+        rospy.loginfo('FrontRF: '+str(self.rfReading))
+        rospy.loginfo('Encorder: '+str(self.encReading))
+        if(self.encReading < ENC_REV_LIMIT):
+            currRobotSpeed = PATROL_REV_SPEED
+            return 'ENC_LIM'
 
         if(self.rfReading < APPROACH_DIST):
             robotSpeedPub.publish(0)
             return 'RF_LIM'
-        
-        if(self.encReading < ENC_REV_LIMIT):
-            rospy.loginfo('Encoder over limit')
-            currRobotSpeed = PATROL_REV_SPEED
-            return 'ENC_LIM'
-            
+
+        #if(self.batReading < START_CHARGING_THRESH):
+         #   return 'BAT_LOW'
+        if(aiGlobal == True):
+            robotSpeedPub.publish(0)
+            return 'DETERRING'
         robotSpeedPub.publish(PATROL_REV_SPEED)
         return False
+
+    # def __init__(self):
+    #     smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP', 'DETERRING'])
+    #     self.encReading = encGlobal
+    #     robotSpeedPub.publish(PATROL_REV_SPEED)
+
+    # def execute(self, userdata):
+    #     forward = False
+    #     statePub.publish("Patrolling Backwards")
+    #     self.switch = switchGlobal
+    #     self.rfReading = rfBackGlobal
+    #     self.encReading = encGlobal
+    #     if not self.switch:
+    #         return 'ESTOP'
+
+    #     rospy.loginfo('aiGlobal: '+str(aiGlobal))
+    #     rospy.loginfo('BackRF: '+str(self.rfReading))
+    #     rospy.loginfo('Encorder: '+str(self.encReading))
+        
+    #     if(aiGlobal):
+    #         robotSpeedPub.publish(0)
+    #         rospy.loginfo('Deter')
+    #         return 'DETERRING'
+
+    #     if(self.rfReading < APPROACH_DIST):
+    #         robotSpeedPub.publish(0)
+    #         return 'RF_LIM'
+        
+    #     if(self.encReading < ENC_REV_LIMIT):
+    #         rospy.loginfo('Encoder over limit')
+    #         currRobotSpeed = PATROL_REV_SPEED
+    #         return 'ENC_LIM'
+            
+    #     robotSpeedPub.publish(PATROL_REV_SPEED)
+    #     return False
 
 # transition state allowing robot to come to a full stop
 class FWD2REV(smach.State):

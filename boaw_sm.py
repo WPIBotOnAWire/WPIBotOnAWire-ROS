@@ -123,7 +123,7 @@ class FWD(smach.State):
     def execute(self, userdata):
         statePub.publish("Patrolling Forwards")
         self.switch = switchGlobal
-        direction = True
+        forward = True
         if (not self.switch) or manualGlobal:
             return 'ESTOP'
         self.encReading = encGlobal
@@ -155,6 +155,7 @@ class REV(smach.State):
         smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP', 'DETERRING'])
         self.encReading = encGlobal
         robotSpeedPub.publish(PATROL_REV_SPEED)
+        
     def execute(self, userdata):
         forward = False
         statePub.publish("Patrolling Backwards")

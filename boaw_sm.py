@@ -155,7 +155,7 @@ class REV(smach.State):
         smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP', 'DETERRING'])
         self.encReading = encGlobal
         robotSpeedPub.publish(PATROL_REV_SPEED)
-        
+
     def execute(self, userdata):
         forward = False
         statePub.publish("Patrolling Backwards")
@@ -178,10 +178,10 @@ class REV(smach.State):
             robotSpeedPub.publish(0)
             return 'RF_LIM'
         
-        # if(self.encReading < ENC_REV_LIMIT):
-        #     rospy.loginfo('Encoder over limit')
-        #     currRobotSpeed = PATROL_REV_SPEED
-        #     return 'ENC_LIM'
+        if(self.encReading < ENC_REV_LIMIT):
+            rospy.loginfo('Encoder over limit')
+            currRobotSpeed = PATROL_REV_SPEED
+            return 'ENC_LIM'
             
         robotSpeedPub.publish(PATROL_REV_SPEED)
         return False
@@ -338,7 +338,7 @@ def main():
     with sm:
         # Add states to the container
         smach.StateMachine.add('STATIC', Static(), 
-                               transitions={'ON':'FWD', 'OFF':'STATIC'})
+                               transitions={'ON':'REV', 'OFF':'STATIC'})
         smach.StateMachine.add('FWD', FWD(), 
                                transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'DETERRING','BAT_LOW':'APPROACH_DOCK', 'DETERRING': 'DETERRING', 'ESTOP':'STATIC'} )
         smach.StateMachine.add('FWD2REV', FWD2REV(), 

@@ -152,27 +152,36 @@ class FWD(smach.State):
 
 class REV(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['ENC_LIM', False,'DETERRING','ESTOP'])
+        smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP', 'DETERRING'])
         self.encReading = encGlobal
         robotSpeedPub.publish(PATROL_REV_SPEED)
     def execute(self, userdata):
         forward = False
         statePub.publish("Patrolling Backwards")
         self.switch = switchGlobal
+        self.rfReading = rfBackGlobal
+        self.encReading = encGlobal
         if not self.switch:
             return 'ESTOP'
-        self.encReading = encGlobal
+
+        rospy.loginfo('aiGlobal: '+str(aiGlobal))
+        rospy.loginfo('BackRF: '+str(self.rfReading))
+        rospy.loginfo('Encorder: '+str(self.encReading))
         
-        rospy.loginfo('Encoder: '+str(self.encReading))
         if(aiGlobal):
             robotSpeedPub.publish(0)
             rospy.loginfo('Deter')
             return 'DETERRING'
 
-        if(self.encReading < ENC_REV_LIMIT):
-            rospy.loginfo('Encoder over limit')
-            currRobotSpeed = PATROL_REV_SPEED
-            return 'ENC_LIM'
+        if(self.rfReading < APPROACH_DIST):
+            robotSpeedPub.publish(0)
+            return 'RF_LIM'
+        
+        # if(self.encReading < ENC_REV_LIMIT):
+        #     rospy.loginfo('Encoder over limit')
+        #     currRobotSpeed = PATROL_REV_SPEED
+        #     return 'ENC_LIM'
+            
         robotSpeedPub.publish(PATROL_REV_SPEED)
         return False
 
@@ -322,6 +331,7 @@ def main():
 
     # Create a SMACH state machine
     sm = smach.StateMachine(outcomes=[True, False])
+    
 
     # Open the container
     with sm:
@@ -329,11 +339,11 @@ def main():
         smach.StateMachine.add('STATIC', Static(), 
                                transitions={'ON':'FWD', 'OFF':'STATIC'})
         smach.StateMachine.add('FWD', FWD(), 
-                               transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'DETERRING','BAT_LOW':'APPROACH_DOCK','ESTOP':'STATIC', 'DETERRING': 'DETERRING'} )
+                               transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'DETERRING','BAT_LOW':'APPROACH_DOCK', 'DETERRING': 'DETERRING', 'ESTOP':'STATIC'} )
         smach.StateMachine.add('FWD2REV', FWD2REV(), 
                                transitions={True :'REV', False:'FWD2REV','ESTOP':'STATIC'})
         smach.StateMachine.add('REV', REV(), 
-                               transitions={'ENC_LIM' :'REV2FWD', False: 'REV','DETERRING': 'DETERRING', 'ESTOP':'STATIC'})
+                               transitions={'ENC_LIM' :'REV2FWD', False: 'REV','RF_LIM':'DETERRING', 'BAT_LOW':'APPROACH_DOCK', 'DETERRING': 'DETERRING', 'ESTOP':'STATIC'})
         smach.StateMachine.add('REV2FWD', REV2FWD(), 
                                transitions={True :'FWD', False:'REV2FWD','ESTOP':'STATIC'})
         smach.StateMachine.add('DETERRING', DETERRING(), 

@@ -331,6 +331,7 @@ def main():
 
     # Create a SMACH state machine
     sm = smach.StateMachine(outcomes=[True, False])
+    
 
     # Open the container
     with sm:

@@ -14,8 +14,8 @@ PATROL_FWD_SPEED = 50
 APPROACH_FWD_SPEED = 30
 PATROL_REV_SPEED = -50
 APPROACH_REV_SPEED = -30
-APPROACH_DIST = 0.15 #meters
-STOP_DIST = .25 #meters
+APPROACH_DIST = 0.5 #meters
+# STOP_DIST = .25 #meters
 ENC_FWD_LIMIT = 1500# Ticks
 ENC_REV_LIMIT = -1500 # Ticks
 ROBOT_ACCEL = 0.0000001 # 0.1% per tick
@@ -193,14 +193,14 @@ class REV(smach.State):
 class FWD2REV(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=[True, False,'ESTOP'])
-        robotSpeedPub.publish(currRobotSpeed)
+        robotSpeedPub.publish(0)
 
     def execute(self, userdata):
         statePub.publish("Changing Directions")
         self.switch = switchGlobal
         if not self.switch:
             return 'ESTOP'
-        robotSpeedPub.publish(currRobotSpeed)
+        robotSpeedPub.publish(0)
         # rospy.loginfo('current speed: '+str(currRobotSpeed))
         globals()['currRobotSpeed'] = currRobotSpeed - ROBOT_ACCEL
         if currRobotSpeed >= PATROL_REV_SPEED:
@@ -211,14 +211,14 @@ class FWD2REV(smach.State):
 class REV2FWD(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['FWD', False,'ESTOP'])
-        robotSpeedPub.publish(currRobotSpeed)
+        robotSpeedPub.publish(0)
 
     def execute(self, userdata):
         statePub.publish("Changing Directions")
         self.switch = switchGlobal
         if not self.switch:
             return 'ESTOP'
-        robotSpeedPub.publish(currRobotSpeed)
+        robotSpeedPub.publish(0)
         globals()['currRobotSpeed'] = currRobotSpeed + ROBOT_ACCEL
         rospy.loginfo('current speed: '+str(currRobotSpeed))
         if currRobotSpeed <= PATROL_FWD_SPEED:

@@ -98,7 +98,6 @@ statePub = rospy.Publisher('/robot_state', String, queue_size=10)
 # this state is when the robot is disabled or in teleop mode
 class Static(smach.State):
     def __init__(self):
-        os.system(f"play -n synth sin 2000 trim 0 00:01")
         smach.State.__init__(self, outcomes=['ON', 'OFF'])
         self.switch = switchGlobal
     def execute(self, userdata):
@@ -242,7 +241,6 @@ class DETERRING(smach.State):
         self.rfReading = rfFrontGlobal
          #turn on the the deterrents
         rospy.loginfo('I blink here')
-        os.system(f"play -n synth sin 4000 trim 0 00:01")
         flashLightPub.publish(True)
         rospy.sleep(0.26)
         flashLightPub.publish(False)

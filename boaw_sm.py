@@ -161,7 +161,7 @@ class REV(smach.State):
         robotSpeedPub.publish(PATROL_REV_SPEED)
 
     def execute(self, userdata):
-        statePub.publish("Patrolling reverse")
+        statePub.publish("Patrolling Forwards")
         self.switch = switchGlobal
         forward = False
         if (not self.switch) or manualGlobal:

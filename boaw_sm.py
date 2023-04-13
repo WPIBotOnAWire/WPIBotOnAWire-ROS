@@ -72,7 +72,6 @@ def aiCallback(msg):
     # rospy.loginfo(rospy.get_caller_id() + "AI Detected: %s", msg.data)
 
 def direction():
-    global forward
     if forward:
         direction = 'FWD'
     else: 

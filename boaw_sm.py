@@ -16,8 +16,8 @@ PATROL_REV_SPEED = -50
 APPROACH_REV_SPEED = -30
 APPROACH_DIST = 0.15 #meters
 STOP_DIST = .25 #meters
-ENC_FWD_LIMIT = 1000# Ticks
-ENC_REV_LIMIT = -1000 # Ticks
+ENC_FWD_LIMIT = 1500# Ticks
+ENC_REV_LIMIT = -1500 # Ticks
 ROBOT_ACCEL = 0.0000001 # 0.1% per tick
 START_CHARGING_THRESH = 15050 #mV
 DONE_CHARDING_THRESH = 15300 #mV
@@ -135,6 +135,7 @@ class FWD(smach.State):
         rospy.loginfo('FrontRF: '+str(self.rfReading))
         rospy.loginfo('Encorder: '+str(self.encReading))
         if(self.encReading > ENC_FWD_LIMIT):
+            robotSpeedPub.publish(0)
             currRobotSpeed = PATROL_FWD_SPEED
             return 'ENC_LIM'
 
@@ -173,6 +174,7 @@ class REV(smach.State):
         rospy.loginfo('Encorder: '+str(self.encReading))
         if(self.encReading < ENC_REV_LIMIT):
             currRobotSpeed = PATROL_REV_SPEED
+            robotSpeedPub.publish(0)
             return 'ENC_LIM'
 
         if(self.rfReading < APPROACH_DIST):

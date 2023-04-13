@@ -11,14 +11,14 @@ import os
 
 #Constants
 
-PATROL_FWD_SPEED = 40
-APPROACH_FWD_SPEED = 25
+PATROL_FWD_SPEED = 50
+APPROACH_FWD_SPEED = 30
 PATROL_REV_SPEED = -50
 APPROACH_REV_SPEED = -30
 APPROACH_DIST = 0.5 #meters
 # STOP_DIST = .25 #meters
-ENC_FWD_LIMIT = 2500# Ticks
-ENC_REV_LIMIT = -2500 # Ticks
+ENC_FWD_LIMIT = 1500# Ticks
+ENC_REV_LIMIT = -1500 # Ticks
 ROBOT_ACCEL = 0.0000001 # 0.1% per tick
 START_CHARGING_THRESH = 15050 #mV
 DONE_CHARDING_THRESH = 15300 #mV
@@ -203,7 +203,6 @@ class FWD2REV(smach.State):
         if not self.switch:
             return 'ESTOP'
         robotSpeedPub.publish(0)
-        rospy.sleep(1)
         # rospy.loginfo('current speed: '+str(currRobotSpeed))
         globals()['currRobotSpeed'] = currRobotSpeed - ROBOT_ACCEL
         if currRobotSpeed >= PATROL_REV_SPEED:
@@ -222,7 +221,6 @@ class REV2FWD(smach.State):
         if not self.switch:
             return 'ESTOP'
         robotSpeedPub.publish(0)
-        rospy.sleep(1)
         globals()['currRobotSpeed'] = currRobotSpeed + ROBOT_ACCEL
         rospy.loginfo('current speed: '+str(currRobotSpeed))
         if currRobotSpeed <= PATROL_FWD_SPEED:
@@ -345,7 +343,7 @@ def main():
     with sm:
         # Add states to the container
         smach.StateMachine.add('STATIC', Static(), 
-                               transitions={'ON':'FWD', 'OFF':'STATIC'})
+                               transitions={'ON':'REV', 'OFF':'STATIC'})
         smach.StateMachine.add('FWD', FWD(), 
                                transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'DETERRING','BAT_LOW':'APPROACH_DOCK', 'DETERRING': 'DETERRING', 'ESTOP':'STATIC'} )
         smach.StateMachine.add('FWD2REV', FWD2REV(), 

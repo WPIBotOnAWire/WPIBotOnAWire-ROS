@@ -63,7 +63,7 @@ def ManualCallback(msg):
 
 def aiCallback(msg):
     raven = False
-    rospy.loginfo("possible raven: %s", msg.data)
+    rospy.loginfo("poENC_REV_LIMITssible raven: %s", msg.data)
     if msg.data == 'Raven':
         rospy.loginfo("AM RAVEN: %s", raven)
         raven = True
@@ -187,41 +187,6 @@ class REV(smach.State):
         robotSpeedPub.publish(PATROL_REV_SPEED)
         return False
 
-    # def __init__(self):
-    #     smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP', 'DETERRING'])
-    #     self.encReading = encGlobal
-    #     robotSpeedPub.publish(PATROL_REV_SPEED)
-
-    # def execute(self, userdata):
-    #     forward = False
-    #     statePub.publish("Patrolling Backwards")
-    #     self.switch = switchGlobal
-    #     self.rfReading = rfBackGlobal
-    #     self.encReading = encGlobal
-    #     if not self.switch:
-    #         return 'ESTOP'
-
-    #     rospy.loginfo('aiGlobal: '+str(aiGlobal))
-    #     rospy.loginfo('BackRF: '+str(self.rfReading))
-    #     rospy.loginfo('Encorder: '+str(self.encReading))
-        
-    #     if(aiGlobal):
-    #         robotSpeedPub.publish(0)
-    #         rospy.loginfo('Deter')
-    #         return 'DETERRING'
-
-    #     if(self.rfReading < APPROACH_DIST):
-    #         robotSpeedPub.publish(0)
-    #         return 'RF_LIM'
-        
-    #     if(self.encReading < ENC_REV_LIMIT):
-    #         rospy.loginfo('Encoder over limit')
-    #         currRobotSpeed = PATROL_REV_SPEED
-    #         return 'ENC_LIM'
-            
-    #     robotSpeedPub.publish(PATROL_REV_SPEED)
-    #     return False
-
 # transition state allowing robot to come to a full stop
 class FWD2REV(smach.State):
     def __init__(self):
@@ -236,14 +201,14 @@ class FWD2REV(smach.State):
         robotSpeedPub.publish(currRobotSpeed)
         # rospy.loginfo('current speed: '+str(currRobotSpeed))
         globals()['currRobotSpeed'] = currRobotSpeed - ROBOT_ACCEL
-        if currRobotSpeed <= PATROL_REV_SPEED:
+        if currRobotSpeed >= PATROL_REV_SPEED:
             return True
         return False
 
 # transition state allowing robot to come to a full stop
 class REV2FWD(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=[True, False,'ESTOP'])
+        smach.State.__init__(self, outcomes=['FWD', False,'ESTOP'])
         robotSpeedPub.publish(currRobotSpeed)
 
     def execute(self, userdata):
@@ -253,9 +218,9 @@ class REV2FWD(smach.State):
             return 'ESTOP'
         robotSpeedPub.publish(currRobotSpeed)
         globals()['currRobotSpeed'] = currRobotSpeed + ROBOT_ACCEL
-        # rospy.loginfo('current speed: '+str(currRobotSpeed))
-        if currRobotSpeed >= PATROL_FWD_SPEED:
-            return True
+        rospy.loginfo('current speed: '+str(currRobotSpeed))
+        if currRobotSpeed <= PATROL_FWD_SPEED:
+            return 'FWD'
         return False
 
 # this state is triggered when a bird is detected while the robot is in forward
@@ -382,7 +347,7 @@ def main():
         smach.StateMachine.add('REV', REV(), 
                                transitions={'ENC_LIM' :'REV2FWD', False: 'REV','RF_LIM':'DETERRING', 'BAT_LOW':'APPROACH_DOCK', 'DETERRING': 'DETERRING', 'ESTOP':'STATIC'})
         smach.StateMachine.add('REV2FWD', REV2FWD(), 
-                               transitions={True :'FWD', False:'REV2FWD','ESTOP':'STATIC'})
+                               transitions={'FWD':'FWD', False:'REV2FWD','ESTOP':'STATIC'})
         smach.StateMachine.add('DETERRING', DETERRING(), 
                                transitions={False: 'DETERRING','FWD':'FWD', 'REV':'REV','ESTOP':'STATIC'})
         smach.StateMachine.add('APPROACH_DOCK', APPROACH_DOCK(), 

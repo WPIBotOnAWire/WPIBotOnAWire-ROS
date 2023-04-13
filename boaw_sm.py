@@ -71,6 +71,7 @@ def aiCallback(msg):
     # rospy.loginfo(rospy.get_caller_id() + "AI Detected: %s", msg.data)
 
 def direction():
+    global forward
     if forward:
         direction = 'FWD'
     else: 
@@ -159,7 +160,7 @@ class REV(smach.State):
         robotSpeedPub.publish(PATROL_REV_SPEED)
 
     def execute(self, userdata):
-        statePub.publish("Patrolling Forwards")
+        statePub.publish("Patrolling reverse")
         self.switch = switchGlobal
         forward = False
         if (not self.switch) or manualGlobal:

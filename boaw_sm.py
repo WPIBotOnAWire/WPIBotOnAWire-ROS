@@ -7,6 +7,7 @@ import smach_ros
 from std_msgs.msg import Float32, Bool, String, Int32
 from sensor_msgs.msg import BatteryState
 import threading
+import os
 
 #Constants
 
@@ -98,7 +99,7 @@ statePub = rospy.Publisher('/robot_state', String, queue_size=10)
 # this state is when the robot is disabled or in teleop mode
 class Static(smach.State):
     def __init__(self):
-        soundPub.publish(2000)  
+        os.system(f"play -n synth sin 2000 trim 0 00:01")
         smach.State.__init__(self, outcomes=['ON', 'OFF'])
         self.switch = switchGlobal
     def execute(self, userdata):
@@ -244,7 +245,7 @@ class DETERRING(smach.State):
         self.rfReading = rfFrontGlobal
          #turn on the the deterrents
         rospy.loginfo('I blink here')
-        soundPub.publish(4000)
+        os.system(f"play -n synth sin 4000 trim 0 00:01")
         flashLightPub.publish(True)
         rospy.sleep(0.26)
         flashLightPub.publish(False)

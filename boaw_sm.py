@@ -194,6 +194,8 @@ class REV(smach.State):
 
         if(self.rfReading < APPROACH_DIST):
             robotSpeedPub.publish(0)
+            rospy.loginfo("STOPPING FOR OBS POO")
+            rospy.sleep(5)
             return 'RF_LIM'
 
         #if(self.batReading < START_CHARGING_THRESH):
@@ -279,13 +281,13 @@ class STOP(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['RF_LIMIT', 'BIRD','REV','FWD'])
         self.rfReading = rfFrontGlobal
+        self.aiGlobal = aiGlobal
 
     def execute(self, userdata):
         statePub.publish("Stop")
         self.switch = switchGlobal
         rospy.loginfo("STOPPED FOR OBS")
-        rospy.loginfo("STOPPED FOR OBS")
-        #rospy.loginfo('FrontRF: '+str(self.rfReading))
+        rospy.loginfo(aiGlobal)
         if(aiGlobal):
             return 'BIRD'
         self.rfReading = rfFrontGlobal

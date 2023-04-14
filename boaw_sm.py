@@ -158,8 +158,6 @@ class FWD(smach.State):
 class REV(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP', 'DETERRING'])
-        self.rfReading = rfBackGlobal
-        self.encReading = encGlobal
         robotSpeedPub.publish(PATROL_REV_SPEED)
 
     def execute(self, userdata):

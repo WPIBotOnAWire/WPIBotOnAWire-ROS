@@ -174,7 +174,7 @@ class REV(smach.State):
         rospy.loginfo('aiGlobal: '+str(aiGlobal))
         rospy.loginfo('BackRF: '+str(self.rfReading))
         rospy.loginfo('Encorder: '+str(self.encReading))
-        if(self.encReading > ENC_REV_LIMIT):
+        if(self.encReading < ENC_REV_LIMIT):
             robotSpeedPub.publish(0)
             currRobotSpeed = PATROL_FWD_SPEED
             return 'ENC_LIM'

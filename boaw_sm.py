@@ -161,24 +161,25 @@ class REV(smach.State):
         robotSpeedPub.publish(PATROL_REV_SPEED)
 
     def execute(self, userdata):
-        statePub.publish("Patrolling Forwards")
+        statePub.publish("Patrolling Backwards")
         self.switch = switchGlobal
-        forward = False
+        forward = True
         if (not self.switch) or manualGlobal:
             return 'ESTOP'
         self.encReading = encGlobal
         self.rfReading = rfBackGlobal
         self.batReading = batGlobal
+        
         #rospy.loginfo('Batt: '+str(self.batReading))
-        #rospy.loginfo('aiGlobal: '+str(aiGlobal))
+        rospy.loginfo('aiGlobal: '+str(aiGlobal))
         rospy.loginfo('BackRF: '+str(self.rfReading))
-        #rospy.loginfo('Encorder: '+str(self.encReading))
-        if(self.encReading < ENC_REV_LIMIT):
-            currRobotSpeed = PATROL_REV_SPEED
+        rospy.loginfo('Encorder: '+str(self.encReading))
+        if(self.encReading > ENC_REV_LIMIT):
             robotSpeedPub.publish(0)
+            currRobotSpeed = PATROL_FWD_SPEED
             return 'ENC_LIM'
 
-        if(self.rfReading <= APPROACH_DIST):
+        if(self.rfReading < APPROACH_DIST):
             robotSpeedPub.publish(0)
             return 'RF_LIM'
 

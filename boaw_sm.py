@@ -279,8 +279,11 @@ class STOP(smach.State):
         statePub.publish("Stop")
         robotSpeedPub.publish(0)
         self.switch = switchGlobal
-        rospy.loginfo("STOPPED FOR OBS")
-        rospy.loginfo(aiGlobal)
+        #rospy.loginfo('Batt: '+str(self.batReading))
+        rospy.loginfo('aiGlobal: '+str(aiGlobal))
+        rospy.loginfo('FrontRF: '+str(self.rfFrontGlobal))
+        rospy.loginfo('FrontRF: '+str(self.rfBackGlobal))
+        rospy.loginfo('Encoder: '+str(self.encReading))
         if(aiGlobal):
             return 'BIRD'
         if(rfFrontGlobal <= APPROACH_DIST or rfBackGlobal <=APPROACH_DIST):

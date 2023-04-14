@@ -273,16 +273,16 @@ class STOP(smach.State):
         smach.State.__init__(self, outcomes=['RF_LIMIT', 'BIRD','REV','FWD'])
         self.rfReading = rfFrontGlobal
         self.aiGlobal = aiGlobal
-        self.rfFrontGlobal = rfFrontGlobal
-        self.rfBackGlobal = rfBackGlobal
+        self.rfFront = rfFrontGlobal
+        self.rfBack = rfBackGlobal
     def execute(self, userdata):
         statePub.publish("Stop")
         robotSpeedPub.publish(0)
         self.switch = switchGlobal
         #rospy.loginfo('Batt: '+str(self.batReading))
-        rospy.loginfo('aiGlobal: '+str(type(aiGlobal)))
-        rospy.loginfo('FrontRF: '+ str(rfFrontGlobal))
-        rospy.loginfo('FrontRF: '+ str(rfBackGlobal))
+        rospy.loginfo('aiGlobal: '+(aiGlobal))
+        rospy.loginfo('FrontRF: '+ str(rfFront))
+        rospy.loginfo('FrontRF: '+ str(rfBack))
         if(aiGlobal):
             return 'BIRD'
         if(rfFrontGlobal <= APPROACH_DIST or rfBackGlobal <=APPROACH_DIST):

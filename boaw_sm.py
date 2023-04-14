@@ -93,6 +93,18 @@ flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
 soundPub = rospy.Publisher('/play_sound', Int32, queue_size=10)
 statePub = rospy.Publisher('/robot_state', String, queue_size=10)
 
+def play_init_sound():
+    #plays bird is the word when robot inits
+    #just for fun, but tests if speakers work
+    os.system(f"play -n synth sin 418.65 trim 0 00:0.2")
+    os.system(f"play -n synth sin 418.65 trim 0 00:0.2")
+    os.system(f"play -n synth sin 279.42 trim 0 00:0.2")
+    os.system(f"play -n synth sin 0 trim 0 00:0.15")
+    os.system(f"play -n synth sin 418.65 trim 0 00:0.1")
+    os.system(f"play -n synth sin 418.65 trim 0 00:0.1")
+    os.system(f"play -n synth sin 418.65 trim 0 00:0.05")
+    os.system(f"play -n synth sin 279.42 trim 0 00:0.1")
+
 # define state Static
 # this state is when the robot is disabled or in teleop mode
 class Static(smach.State):
@@ -242,7 +254,7 @@ class DETERRING(smach.State):
         self.rfReading = rfFrontGlobal
          #turn on the the deterrents
         rospy.loginfo('I blink here')
-        soundPub.publish(4000)
+        os.system(f"play -n synth sin 4000 trim 0 00:03")
         flashLightPub.publish(True)
         rospy.sleep(0.26)
         flashLightPub.publish(False)

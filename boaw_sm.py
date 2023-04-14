@@ -283,7 +283,6 @@ class STOP(smach.State):
         rospy.loginfo('aiGlobal: '+str(aiGlobal))
         rospy.loginfo('FrontRF: '+str(self.rfFrontGlobal))
         rospy.loginfo('FrontRF: '+str(self.rfBackGlobal))
-        rospy.loginfo('Encoder: '+str(self.encReading))
         if(aiGlobal):
             return 'BIRD'
         if(rfFrontGlobal <= APPROACH_DIST or rfBackGlobal <=APPROACH_DIST):

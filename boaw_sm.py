@@ -73,7 +73,7 @@ def direction():
 def postWebdata(state):
     url = "http://130:215:174:110:5000/update_globals"
     data = {"state": state, "dist": encGlobal, "wire_end": 1000}
-    requests.post(url, json=json_data)
+    requests.post(url, json=data)
 
 
 # Subscribers

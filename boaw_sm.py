@@ -378,11 +378,11 @@ def main():
         smach.StateMachine.add('STATIC', Static(), 
                                transitions={'ON':'FWD', 'OFF':'STATIC'})
         smach.StateMachine.add('FWD', FWD(), 
-                               transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'DETERRING','BAT_LOW':'APPROACH_DOCK', 'DETERRING': 'DETERRING', 'ESTOP':'STATIC'} )
+                               transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'STOP','BAT_LOW':'APPROACH_DOCK', 'DETERRING': 'DETERRING', 'ESTOP':'STATIC'} )
         smach.StateMachine.add('FWD2REV', FWD2REV(), 
                                transitions={True :'REV', False:'FWD2REV','ESTOP':'STATIC'})
         smach.StateMachine.add('REV', REV(), 
-                               transitions={'ENC_LIM' :'REV2FWD', False: 'REV','RF_LIM':'DETERRING', 'BAT_LOW':'APPROACH_DOCK', 'DETERRING': 'DETERRING', 'ESTOP':'STATIC'})
+                               transitions={'ENC_LIM' :'REV2FWD', False: 'REV','RF_LIM':'STOP', 'BAT_LOW':'APPROACH_DOCK', 'DETERRING': 'DETERRING', 'ESTOP':'STATIC'})
         smach.StateMachine.add('REV2FWD', REV2FWD(), 
                                transitions={'FWD':'FWD', False:'REV2FWD','ESTOP':'STATIC'})
         smach.StateMachine.add('DETERRING', DETERRING(), 

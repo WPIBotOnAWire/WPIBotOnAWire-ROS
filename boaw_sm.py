@@ -38,11 +38,9 @@ forward = True # use this to keep patrolling the wire after DETERRING
 lasPos = 0
 
 def RfFrontCallback(msg):
-    rospy.loginfo("Front RF Callback")
     globals()['rfFrontGlobal'] = msg.data
 
 def RfBackCallback(msg):
-    rospy.loginfo("Back RF Callback")
     globals()['rfBackGlobal'] = msg.data
 
 def EncCallback(msg):
@@ -280,7 +278,7 @@ class STOP(smach.State):
         #rospy.loginfo('Batt: '+str(self.batReading))
         rospy.loginfo('aiGlobal: '+ str(aiGlobal))
         rospy.loginfo('FrontRF: '+ str(self.rfFront))
-        rospy.loginfo('FrontRF: '+ str(self.rfBack))
+        rospy.loginfo('BackRF: '+ str(self.rfBack))
         if(aiGlobal):
             return 'BIRD'
         if(self.rfFront <= APPROACH_DIST or self.rfBack <=APPROACH_DIST):

@@ -283,7 +283,8 @@ class STOP(smach.State):
     def execute(self, userdata):
         statePub.publish("Stop")
         self.switch = switchGlobal
-        rospy.loginfo('FrontRF: '+str(self.rfReading))
+        rospy.loginfo("STOPPED FOR OBS")
+        #rospy.loginfo('FrontRF: '+str(self.rfReading))
         if(aiGlobal):
             return 'BIRD'
         self.rfReading = rfFrontGlobal

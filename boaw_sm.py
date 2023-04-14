@@ -60,7 +60,7 @@ def ManualCallback(msg):
     # rospy.loginfo("Encoder Callback")
 
 def aiCallback(msg):
-    globals()['manualGlobal'] = msg.data
+    globals()['aiGlobal'] = msg.data
 
 def direction():
     if forward:

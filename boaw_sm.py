@@ -267,7 +267,6 @@ class DETERRING(smach.State):
 class STOP(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['RF_LIMIT', 'BIRD','REV','FWD'])
-
     def execute(self, userdata):
         self.rfReading = rfFrontGlobal
         self.aiGlobal = aiGlobal

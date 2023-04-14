@@ -1,8 +1,8 @@
+import cv2
 import tensorflow as tf
 import os
 from PIL import Image
 import numpy as np
-import cv2
 import time
 import warnings
 import rospy
@@ -70,9 +70,13 @@ def run(filename, labels_filename):
 
     cam = cv2.VideoCapture(0)
     with tf.compat.v1.Session() as sess:
+        os.system(f"play -n synth sin 2000 trim 0 00:01")
+        rospy.sleep(1.3)
+        os.system(f"play -n synth sin 1000 trim 0 00:01")
+        
         while True:
             ret_val, image = cam.read()
-            cv2.imshow('webcam feed', image)
+            #cv2.imshow('webcam feed', image)
 
 
             # Convert to OpenCV format

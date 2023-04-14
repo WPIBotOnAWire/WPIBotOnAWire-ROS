@@ -64,12 +64,12 @@ def ManualCallback(msg):
 
 def aiCallback(msg):
     raven = False
-    #rospy.loginfo("poENC_REV_LIMITssible raven: %s", msg.data)
+    rospy.loginfo("AI: %s", msg.data)
     if msg.data == 'Raven':
         rospy.loginfo("AM RAVEN: %s", raven)
         raven = True
     globals()['aiGlobal'] = True
-    rospy..loginfo("RAVEN DETECTED")
+    rospy.loginfo("RAVEN DETECTED")
     # rospy.loginfo(rospy.get_caller_id() + "AI Detected: %s", msg.data)
 
 def direction():

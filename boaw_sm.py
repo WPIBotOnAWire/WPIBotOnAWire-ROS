@@ -181,11 +181,11 @@ class REV(smach.State):
         self.encReading = encGlobal
         self.rfReading = rfBackGlobal
         self.batReading = batGlobal
-        
+        rospy.loginfo("REV")
         #rospy.loginfo('Batt: '+str(self.batReading))
-        rospy.loginfo('aiGlobal: '+str(aiGlobal))
-        rospy.loginfo('FrontRF: '+str(self.rfReading))
-        rospy.loginfo('Encorder: '+str(self.encReading))
+        #rospy.loginfo('aiGlobal: '+str(aiGlobal))
+        #rospy.loginfo('FrontRF: '+str(self.rfReading))
+        #rospy.loginfo('Encorder: '+str(self.encReading))
         if(self.encReading < ENC_REV_LIMIT):
             currRobotSpeed = PATROL_REV_SPEED
             robotSpeedPub.publish(0)
@@ -278,11 +278,11 @@ class STOP(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['RF_LIMIT', 'BIRD','REV','FWD'])
         self.rfReading = rfFrontGlobal
-        rospy.loginfo("STOPPED FOR OBS")
 
     def execute(self, userdata):
         statePub.publish("Stop")
         self.switch = switchGlobal
+        rospy.loginfo("STOPPED FOR OBS")
         rospy.loginfo("STOPPED FOR OBS")
         #rospy.loginfo('FrontRF: '+str(self.rfReading))
         if(aiGlobal):

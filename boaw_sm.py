@@ -101,6 +101,7 @@ def play_init_sound():
 # this state is when the robot is disabled or in teleop mode
 class Static(smach.State):
     def __init__(self):
+        input("State Machine Ready! Unplug and replug Sound USB, then press [Enter] to Continue")
         smach.State.__init__(self, outcomes=['ON', 'OFF'])
         play_init_sound()
         self.switch = switchGlobal
@@ -120,7 +121,6 @@ class Static(smach.State):
 # in this state the robot is moving along the wire
 class FWD(smach.State):
     def __init__(self):
-        input("State Machine Ready! Press Enter to Continue")
         smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP', 'DETERRING'])
         self.rfReading = rfFrontGlobal
         self.encReading = encGlobal

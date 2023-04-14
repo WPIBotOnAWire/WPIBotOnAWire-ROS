@@ -281,8 +281,8 @@ class STOP(smach.State):
         self.switch = switchGlobal
         #rospy.loginfo('Batt: '+str(self.batReading))
         rospy.loginfo('aiGlobal: '+str(aiGlobal))
-        rospy.loginfo('FrontRF: '+str(self.rfFrontGlobal))
-        rospy.loginfo('FrontRF: '+str(self.rfBackGlobal))
+        rospy.loginfo('FrontRF: '+rfFrontGlobal)
+        rospy.loginfo('FrontRF: '+ rfBackGlobal)
         if(aiGlobal):
             return 'BIRD'
         if(rfFrontGlobal <= APPROACH_DIST or rfBackGlobal <=APPROACH_DIST):

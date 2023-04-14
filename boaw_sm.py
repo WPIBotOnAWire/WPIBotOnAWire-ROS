@@ -394,18 +394,18 @@ def main():
                         transitions={'BIRD':'DETERRING', 'RF_LIMIT':'STOP','REV':'REV', 'FWD':'FWD'})
 
     # Create a thread to execute the smach container
-    smach_thread = threading.Thread(target=sm.execute)
-    smach_thread.start()
+    #smach_thread = threading.Thread(target=sm.execute)
+    #smach_thread.start()
 
     # Wait for ctrl-c
     rospy.spin()
 
     # Request the container to preempt
-    my_smach_con.request_preempt()
+    #my_smach_con.request_preempt()
 
     # Block until everything is preempted
     # (you could do something more complicated to get the execution outcome if you want it)
-    smach_thread.join()
+    #smach_thread.join()
 
 
 if __name__ == '__main__':

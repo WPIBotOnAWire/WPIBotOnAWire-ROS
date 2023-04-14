@@ -62,7 +62,6 @@ def ManualCallback(msg):
     # rospy.loginfo("Encoder Callback")
 
 def aiCallback(msg):
-    rospy.loginfo("AI: %s", msg)
     globals()['manualGlobal'] = msg
 
 def direction():
@@ -396,7 +395,8 @@ def main():
     # Create a thread to execute the smach container
     #smach_thread = threading.Thread(target=sm.execute)
     #smach_thread.start()
-
+    print(rfBackGlobal)
+    print(rfFrontGlobal)
     # Wait for ctrl-c
     rospy.spin()
 

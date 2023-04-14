@@ -280,7 +280,7 @@ class STOP(smach.State):
         robotSpeedPub.publish(0)
         self.switch = switchGlobal
         #rospy.loginfo('Batt: '+str(self.batReading))
-        rospy.loginfo('aiGlobal: '+str(typeof(aiGlobal)))
+        rospy.loginfo('aiGlobal: '+str(type(aiGlobal)))
         rospy.loginfo('FrontRF: '+ str(rfFrontGlobal))
         rospy.loginfo('FrontRF: '+ str(rfBackGlobal))
         if(aiGlobal):

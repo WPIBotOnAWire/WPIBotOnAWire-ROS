@@ -6,7 +6,7 @@ import numpy as np
 import time
 import warnings
 import rospy
-from std_msgs.msg import String
+from std_msgs.msg import Bool
 warnings.filterwarnings('ignore') 
 
 
@@ -40,7 +40,7 @@ def resize_to_256_square(image):
     return cv2.resize(image, (256, 256), interpolation = cv2.INTER_LINEAR)
 
 def run(filename, labels_filename):
-    pub = rospy.Publisher('/ai_detection', String, queue_size=10)
+    pub = rospy.Publisher('/ai_detection', Bool, queue_size=10)
     rospy.init_node('ai_pub', anonymous=True)
 
     graph_def = tf.compat.v1.GraphDef()
@@ -112,8 +112,12 @@ def run(filename, labels_filename):
 
             # Print the highest probability label
             highest_probability_index = np.argmax(predictions)
-            rospy.loginfo(labels[highest_probability_index])
-            pub.publish(labels[highest_probability_index])
+            if(labels[highest_probability_index] == 'Raven'):
+                rospy.loginfo("============RAVEN DETECTED============")
+                pub.publish(True)
+            else:
+                rospy.loginfo("No Raven Detected")
+                pub.publish(False)
             #print('Classified as: ' + labels[highest_probability_index])
             #print("Raven Probability: " + str(predictions[highest_probability_index][1]))
             #print(f"Processed in {toc - tic:0.4f} seconds")

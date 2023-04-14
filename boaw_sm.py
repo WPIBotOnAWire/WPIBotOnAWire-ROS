@@ -63,14 +63,8 @@ def ManualCallback(msg):
     # rospy.loginfo("Encoder Callback")
 
 def aiCallback(msg):
-    raven = False
+    globals()['manualGlobal'] = msg.data
     rospy.loginfo("AI: %s", msg.data)
-    if msg.data == 'Raven':
-        rospy.loginfo("AM RAVEN: %s", raven)
-        raven = True
-    globals()['aiGlobal'] = True
-    rospy.loginfo("RAVEN DETECTED")
-    # rospy.loginfo(rospy.get_caller_id() + "AI Detected: %s", msg.data)
 
 def direction():
     if forward:
@@ -87,7 +81,7 @@ rospy.Subscriber("/encoder", Int32, EncCallback)
 rospy.Subscriber("/battery", BatteryState, BatCallback)
 rospy.Subscriber("/switch", Bool, SwitchCallback)
 rospy.Subscriber("/manual_override", Bool, ManualCallback)
-rospy.Subscriber("/ai_detection",String, aiCallback)
+rospy.Subscriber("/ai_detection",Bool, aiCallback)
 
 # Publishers
 robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
@@ -194,8 +188,6 @@ class REV(smach.State):
 
         if(self.rfReading < APPROACH_DIST):
             robotSpeedPub.publish(0)
-            rospy.loginfo("STOPPING FOR OBS POO")
-            rospy.sleep(5)
             return 'RF_LIM'
 
         #if(self.batReading < START_CHARGING_THRESH):
@@ -285,12 +277,16 @@ class STOP(smach.State):
 
     def execute(self, userdata):
         statePub.publish("Stop")
+        robotSpeedPub.publish(0)
         self.switch = switchGlobal
         rospy.loginfo("STOPPED FOR OBS")
         rospy.loginfo(aiGlobal)
         if(aiGlobal):
             return 'BIRD'
-        self.rfReading = rfFrontGlobal
+        self.rfFront = rfFrontGlobal
+        self.rfBack = rfBackGlobal
+        if(rfFront <= APPROACH_DIST or rfBack <=APPROACH_DIST):
+            return 'RF_LIMIT'
 
         if self.rfReading > APPROACH_DIST:
             return direction()

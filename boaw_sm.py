@@ -72,7 +72,8 @@ def direction():
 def postWebdata(state):
     url = "http://130.215.174.110:5000/update_globals"
     data = {"state": state, "dist": encGlobal, "wire_end": 1000}
-    json_data = json.loads(data)
+    json_data_2 = json.dumps(data)
+    json_data = json.loads(json_data_2)
     requests.post(url, json=json_data)
 
 

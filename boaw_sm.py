@@ -391,7 +391,7 @@ def main():
     with sm:
         # Add states to the container
         smach.StateMachine.add('STATIC', Static(), 
-                               transitions={'ON':'FWD', 'OFF':'FWD'})
+                               transitions={'ON':'REV', 'OFF':'REV'})
         smach.StateMachine.add('FWD', FWD(), 
                                transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'STOP','BAT_LOW':'APPROACH_DOCK', 'DETERRING': 'DETERRING', 'ESTOP':'STATIC'} )
         smach.StateMachine.add('FWD2REV', FWD2REV(), 

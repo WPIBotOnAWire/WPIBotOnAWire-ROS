@@ -120,6 +120,7 @@ class Static(smach.State):
 # in this state the robot is moving along the wire
 class FWD(smach.State):
     def __init__(self):
+        input("State Machine Ready! Press Enter to Continue")
         smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP', 'DETERRING'])
         self.rfReading = rfFrontGlobal
         self.encReading = encGlobal

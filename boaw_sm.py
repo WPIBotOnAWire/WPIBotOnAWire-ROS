@@ -7,6 +7,7 @@ import smach_ros
 from std_msgs.msg import Float32, Bool, String, Int32
 from sensor_msgs.msg import BatteryState
 import threading
+import json
 
 #Constants
 
@@ -92,6 +93,14 @@ robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
 flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
 soundPub = rospy.Publisher('/play_sound', Int32, queue_size=10)
 statePub = rospy.Publisher('/robot_state', String, queue_size=10)
+webPub = rospy.Publisher('/webdata', String, queue_size=10)
+
+def sendWebData(state): #sends the data to the web server
+    data = {"state": state, "dist": encGlobal, "wire_end": ENC_FWD_LIMIT, "battery":50}
+    data = json.dumps(data) #Stringify the JSON for ros
+    rospy.loginfo("Data has been sent to the website!")
+    webPub.publish(data)
+    
 
 # define state Static
 # this state is when the robot is disabled or in teleop mode
@@ -115,6 +124,7 @@ class Static(smach.State):
 # in this state the robot is moving along the wire
 class FWD(smach.State):
     def __init__(self):
+        sendWebData("FWD")
         smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP', 'DETERRING'])
         self.rfReading = rfFrontGlobal
         self.encReading = encGlobal
@@ -153,6 +163,7 @@ class FWD(smach.State):
 
 class REV(smach.State):
     def __init__(self):
+        sendWebData("REV")
         smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP', 'DETERRING'])
         self.rfReading = rfBackGlobal
         self.encReading = encGlobal
@@ -192,6 +203,7 @@ class REV(smach.State):
 # transition state allowing robot to come to a full stop
 class FWD2REV(smach.State):
     def __init__(self):
+        sendWebData("FWD2REV")
         smach.State.__init__(self, outcomes=[True, False,'ESTOP'])
         robotSpeedPub.publish(0)
 
@@ -211,6 +223,7 @@ class FWD2REV(smach.State):
 # transition state allowing robot to come to a full stop
 class REV2FWD(smach.State):
     def __init__(self):
+        sendWebData("REV2FWD")
         smach.State.__init__(self, outcomes=['FWD', False,'ESTOP'])
         robotSpeedPub.publish(0)
 
@@ -230,6 +243,7 @@ class REV2FWD(smach.State):
 # this state is triggered when a bird is detected while the robot is in forward
 class DETERRING(smach.State):
     def __init__(self):
+        sendWebData("DETERRING")
         smach.State.__init__(self, outcomes=[False, 'REV','FWD','ESTOP'])
         self.rfReading = rfFrontGlobal
 

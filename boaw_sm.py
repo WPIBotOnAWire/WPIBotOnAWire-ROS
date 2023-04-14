@@ -62,6 +62,9 @@ def ManualCallback(msg):
 def aiCallback(msg):
     globals()['aiGlobal'] = msg.data
 
+def updateForward(dir):
+    globals() ['forward'] = dir
+
 def direction():
     if forward:
         direction = 'FWD'
@@ -140,7 +143,7 @@ class FWD(smach.State):
         postWebdata("Patrolling Right")
         statePub.publish("Patrolling Forwards")
         self.switch = switchGlobal
-        forward = True
+        updateForward(True)
         if (not self.switch) or manualGlobal:
             return 'ESTOP'
         self.encReading = encGlobal
@@ -177,7 +180,7 @@ class REV(smach.State):
         postWebdata("Patrolling Left")
         statePub.publish("Patrolling Backwards")
         self.switch = switchGlobal
-        forward = False
+        updateForward(False)
         if (not self.switch) or manualGlobal:
             return 'ESTOP'
         self.encReading = encGlobal

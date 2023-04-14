@@ -63,7 +63,7 @@ def ManualCallback(msg):
     # rospy.loginfo("Encoder Callback")
 
 def aiCallback(msg):
-    globals()['manualGlobal'] = msg.data
+    globals()['manualGlobal'] = msg.dataxX
     rospy.loginfo("AI: %s", msg.data)
 
 def direction():
@@ -176,7 +176,6 @@ class REV(smach.State):
         self.encReading = encGlobal
         self.rfReading = rfBackGlobal
         self.batReading = batGlobal
-        rospy.loginfo("REV")
         #rospy.loginfo('Batt: '+str(self.batReading))
         #rospy.loginfo('aiGlobal: '+str(aiGlobal))
         #rospy.loginfo('FrontRF: '+str(self.rfReading))
@@ -186,7 +185,7 @@ class REV(smach.State):
             robotSpeedPub.publish(0)
             return 'ENC_LIM'
 
-        if(self.rfReading < APPROACH_DIST):
+        if(self.rfReading <= APPROACH_DIST):
             robotSpeedPub.publish(0)
             return 'RF_LIM'
 
@@ -274,7 +273,8 @@ class STOP(smach.State):
         smach.State.__init__(self, outcomes=['RF_LIMIT', 'BIRD','REV','FWD'])
         self.rfReading = rfFrontGlobal
         self.aiGlobal = aiGlobal
-
+        self.rfFrontGlobal = rfFrontGlobal
+        self.rfBackGlobal = rfBackGlobal
     def execute(self, userdata):
         statePub.publish("Stop")
         robotSpeedPub.publish(0)
@@ -283,9 +283,7 @@ class STOP(smach.State):
         rospy.loginfo(aiGlobal)
         if(aiGlobal):
             return 'BIRD'
-        self.rfFront = rfFrontGlobal
-        self.rfBack = rfBackGlobal
-        if(rfFront <= APPROACH_DIST or rfBack <=APPROACH_DIST):
+        if(rfFrontGlobal <= APPROACH_DIST or rfBackGlobal <=APPROACH_DIST):
             return 'RF_LIMIT'
 
         if self.rfReading > APPROACH_DIST:

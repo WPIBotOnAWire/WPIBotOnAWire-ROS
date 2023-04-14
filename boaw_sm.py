@@ -122,8 +122,6 @@ class Static(smach.State):
 class FWD(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['ENC_LIM','RF_LIM', False, 'BAT_LOW','ESTOP', 'DETERRING'])
-        self.rfReading = rfFrontGlobal
-        self.encReading = encGlobal
         robotSpeedPub.publish(PATROL_FWD_SPEED)
 
     def execute(self, userdata):

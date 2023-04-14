@@ -110,6 +110,7 @@ def play_init_sound():
 class Static(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['ON', 'OFF'])
+        play_init_sound()
         self.switch = switchGlobal
     def execute(self, userdata):
         statePub.publish("Robot Disabled")
@@ -272,6 +273,25 @@ class DETERRING(smach.State):
            
         return direction()
 
+class STOP(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['RF_LIMIT', 'BIRD','REV','FWD'])
+        self.rfReading = rfFrontGlobal
+        rospy.loginfo("STOPPED FOR OBS")
+
+    def execute(self, userdata):
+        statePub.publish("Stop")
+        self.switch = switchGlobal
+        rospy.loginfo('FrontRF: '+str(self.rfReading))
+        if(aiGlobal):
+            return 'BIRD'
+        self.rfReading = rfFrontGlobal
+
+        if self.rfReading > APPROACH_DIST:
+            return direction()
+           
+        return direction()
+
 class APPROACH_DOCK(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['DOCKED', False,'ESTOP'])
@@ -370,6 +390,8 @@ def main():
                                transitions={'DOCKED':'CHARGING', False:'APPROACH_DOCK','ESTOP':'STATIC'})
         smach.StateMachine.add('CHARGING', CHARGING(), 
                                transitions={'CHARGED':'REV', False:'CHARGING','ESTOP':'STATIC'})
+        smach.StateMachine.add('STOP', STOP(), 
+                        transitions={'BIRD':'DETERRING', 'RF_LIMIT':'STOP','REV':'REV', 'FWD':'FWD'})
 
     # Create a thread to execute the smach container
     smach_thread = threading.Thread(target=sm.execute)

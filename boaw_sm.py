@@ -178,7 +178,7 @@ class REV(smach.State):
         self.batReading = batGlobal
         #rospy.loginfo('Batt: '+str(self.batReading))
         #rospy.loginfo('aiGlobal: '+str(aiGlobal))
-        #rospy.loginfo('FrontRF: '+str(self.rfReading))
+        rospy.loginfo('BackRF: '+str(self.rfReading))
         #rospy.loginfo('Encorder: '+str(self.encReading))
         if(self.encReading < ENC_REV_LIMIT):
             currRobotSpeed = PATROL_REV_SPEED

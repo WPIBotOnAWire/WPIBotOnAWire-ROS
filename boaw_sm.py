@@ -69,6 +69,11 @@ def direction():
         direction = 'REV'
     return direction
 
+def postWebdata(state):
+    url = "http://130:215:174:110:5000/update_globals"
+    data = {"state": state, "dist": encGlobal, "wire_end": 1000}
+    requests.post(url, json=json_data)
+
 
 # Subscribers
 rospy.Subscriber("/rangefinder/front", Float32 , RfFrontCallback)
@@ -84,6 +89,7 @@ robotSpeedPub = rospy.Publisher('/motor_speed', Float32, queue_size=10)
 flashLightPub = rospy.Publisher('/deterrents/led', Bool, queue_size=10)
 soundPub = rospy.Publisher('/play_sound', Int32, queue_size=10)
 statePub = rospy.Publisher('/robot_state', String, queue_size=10)
+webPub = rospy.Publisher('/webData', String, queue_size=10)
 
 def play_init_sound():
     #plays bird is the word when robot inits
@@ -106,6 +112,7 @@ class Static(smach.State):
         play_init_sound()
         self.switch = switchGlobal
     def execute(self, userdata):
+        postWebdata("Static")
         statePub.publish("Robot Disabled")
         self.switch = switchGlobal
         if not manualGlobal:
@@ -125,6 +132,7 @@ class FWD(smach.State):
         robotSpeedPub.publish(PATROL_FWD_SPEED)
 
     def execute(self, userdata):
+        postWebdata("Patrolling Right")
         statePub.publish("Patrolling Forwards")
         self.switch = switchGlobal
         forward = True
@@ -161,6 +169,7 @@ class REV(smach.State):
         robotSpeedPub.publish(PATROL_REV_SPEED)
 
     def execute(self, userdata):
+        postWebdata("Patrolling Left")
         statePub.publish("Patrolling Backwards")
         self.switch = switchGlobal
         forward = False
@@ -198,6 +207,7 @@ class FWD2REV(smach.State):
         robotSpeedPub.publish(0)
 
     def execute(self, userdata):
+        postWebdata("Patrolling Right")
         statePub.publish("Changing Directions")
         self.switch = switchGlobal
         if not self.switch:
@@ -217,6 +227,7 @@ class REV2FWD(smach.State):
         robotSpeedPub.publish(0)
 
     def execute(self, userdata):
+        postWebdata("Patrolling Left")
         statePub.publish("Changing Directions")
         self.switch = switchGlobal
         if not self.switch:
@@ -237,6 +248,7 @@ class DETERRING(smach.State):
 
     def execute(self, userdata):
         statePub.publish("Deterring")
+        postWebdata("Raven")
         self.switch = switchGlobal
         if not self.switch:
             return 'ESTOP'
@@ -266,6 +278,7 @@ class STOP(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['RF_LIMIT', 'BIRD','REV','FWD'])
     def execute(self, userdata):
+        postWebdata("Alert")
         self.rfReading = rfFrontGlobal
         self.aiGlobal = aiGlobal
         self.rfFront = rfFrontGlobal

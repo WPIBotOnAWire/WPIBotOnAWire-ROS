@@ -70,9 +70,11 @@ def run(filename, labels_filename):
 
     cam = cv2.VideoCapture(0)
     with tf.compat.v1.Session() as sess:
-        os.system(f"play -n synth sin 2000 trim 0 00:01")
-        rospy.sleep(1.3)
-        os.system(f"play -n synth sin 1000 trim 0 00:01")
+        os.system(f"play -n synth sin 2000 trim 0 00:0.1")
+        os.system(f"play -n synth sin 1000 trim 0 00:0.1")
+        rospy.sleep
+        os.system(f"play -n synth sin 2000 trim 0 00:0.1")
+        os.system(f"play -n synth sin 1000 trim 0 00:0.1")
         
         while True:
             ret_val, image = cam.read()

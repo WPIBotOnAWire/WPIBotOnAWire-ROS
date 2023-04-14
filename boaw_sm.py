@@ -38,13 +38,12 @@ forward = True # use this to keep patrolling the wire after DETERRING
 lasPos = 0
 
 def RfFrontCallback(msg):
-    # assign rangefinder reading
+    rospy.loginfo("Front RF Callback")
     globals()['rfFrontGlobal'] = msg.data
-    # rospy.loginfo("Front RF Callback")
 
 def RfBackCallback(msg):
+    rospy.loginfo("Back RF Callback")
     globals()['rfBackGlobal'] = msg.data
-    # rospy.loginfo("Back RF Callback")
 
 def EncCallback(msg):
     globals()['encGlobal'] = msg.data
@@ -63,8 +62,8 @@ def ManualCallback(msg):
     # rospy.loginfo("Encoder Callback")
 
 def aiCallback(msg):
+    rospy.loginfo("AI: %s", msg.data)
     globals()['manualGlobal'] = msg.data
-    #rospy.loginfo("AI: %s", msg.data)
 
 def direction():
     if forward:

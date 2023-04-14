@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#hello
 import roslib
 import rospy
 import smach
@@ -71,9 +70,10 @@ def direction():
     return direction
 
 def postWebdata(state):
-    url = "http://130:215:174:110:5000/update_globals"
+    url = "http://130.215.174.110:5000/update_globals"
     data = {"state": state, "dist": encGlobal, "wire_end": 1000}
-    requests.post(url, json=data)
+    json_data = json.loads(data)
+    requests.post(url, json=json_data)
 
 
 # Subscribers

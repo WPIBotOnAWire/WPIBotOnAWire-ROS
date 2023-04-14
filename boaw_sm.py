@@ -163,7 +163,7 @@ class REV(smach.State):
     def execute(self, userdata):
         statePub.publish("Patrolling Backwards")
         self.switch = switchGlobal
-        forward = True
+        forward = False
         if (not self.switch) or manualGlobal:
             return 'ESTOP'
         self.encReading = encGlobal

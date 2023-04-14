@@ -120,7 +120,7 @@ class Static(smach.State):
         play_init_sound()
         self.switch = switchGlobal
     def execute(self, userdata):
-        # postWebdata("Static")
+        postWebdata("Static")
         statePub.publish("Robot Disabled")
         self.switch = switchGlobal
         if not manualGlobal:

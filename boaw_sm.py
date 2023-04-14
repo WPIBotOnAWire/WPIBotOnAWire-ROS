@@ -120,7 +120,7 @@ class Static(smach.State):
         play_init_sound()
         self.switch = switchGlobal
     def execute(self, userdata):
-        postWebdata("Static")
+        # postWebdata("Static")
         statePub.publish("Robot Disabled")
         self.switch = switchGlobal
         if not manualGlobal:
@@ -140,7 +140,7 @@ class FWD(smach.State):
         robotSpeedPub.publish(PATROL_FWD_SPEED)
 
     def execute(self, userdata):
-        postWebdata("Patrolling Right")
+        # postWebdata("Patrolling Right")
         statePub.publish("Patrolling Forwards")
         self.switch = switchGlobal
         updateForward(True)
@@ -177,7 +177,7 @@ class REV(smach.State):
         robotSpeedPub.publish(PATROL_REV_SPEED)
 
     def execute(self, userdata):
-        postWebdata("Patrolling Left")
+        # postWebdata("Patrolling Left")
         statePub.publish("Patrolling Backwards")
         self.switch = switchGlobal
         updateForward(False)
@@ -215,7 +215,7 @@ class FWD2REV(smach.State):
         robotSpeedPub.publish(0)
 
     def execute(self, userdata):
-        postWebdata("Patrolling Right")
+        # postWebdata("Patrolling Right")
         statePub.publish("Changing Directions")
         self.switch = switchGlobal
         if not self.switch:
@@ -235,7 +235,7 @@ class REV2FWD(smach.State):
         robotSpeedPub.publish(0)
 
     def execute(self, userdata):
-        postWebdata("Patrolling Left")
+        # postWebdata("Patrolling Left")
         statePub.publish("Changing Directions")
         self.switch = switchGlobal
         if not self.switch:
@@ -256,7 +256,7 @@ class DETERRING(smach.State):
 
     def execute(self, userdata):
         statePub.publish("Deterring")
-        postWebdata("Raven")
+        # postWebdata("Raven")
         self.switch = switchGlobal
         if not self.switch:
             return 'ESTOP'
@@ -286,7 +286,7 @@ class STOP(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['RF_LIMIT', 'BIRD','REV','FWD'])
     def execute(self, userdata):
-        postWebdata("Alert")
+        # postWebdata("Alert")
         self.rfReading = rfFrontGlobal
         self.aiGlobal = aiGlobal
         self.rfFront = rfFrontGlobal
@@ -391,7 +391,7 @@ def main():
     with sm:
         # Add states to the container
         smach.StateMachine.add('STATIC', Static(), 
-                               transitions={'ON':'FWD', 'OFF':'STATIC'})
+                               transitions={'ON':'FWD', 'OFF':'FWD'})
         smach.StateMachine.add('FWD', FWD(), 
                                transitions={'ENC_LIM' :'FWD2REV', False:'FWD', 'RF_LIM':'STOP','BAT_LOW':'APPROACH_DOCK', 'DETERRING': 'DETERRING', 'ESTOP':'STATIC'} )
         smach.StateMachine.add('FWD2REV', FWD2REV(), 

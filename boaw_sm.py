@@ -62,8 +62,8 @@ def ManualCallback(msg):
     # rospy.loginfo("Encoder Callback")
 
 def aiCallback(msg):
-    rospy.loginfo("AI: %s", msg.data)
-    globals()['manualGlobal'] = msg.data
+    rospy.loginfo("AI: %s", msg)
+    globals()['manualGlobal'] = msg
 
 def direction():
     if forward:

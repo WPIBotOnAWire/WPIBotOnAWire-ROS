@@ -7,6 +7,7 @@ import smach_ros
 from std_msgs.msg import Float32, Bool, String, Int32
 from sensor_msgs.msg import BatteryState
 import threading
+import os
 
 #Constants
 

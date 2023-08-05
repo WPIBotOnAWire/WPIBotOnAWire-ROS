@@ -13,7 +13,6 @@ class states(Enum):
     ROBOT_APPROACH_FWD = 2
     ROBOT_DETERRENT_FWD = 3
     
-
 state = states.ROBOT_IDLE
 
 pubRobotSpeed = rospy.Publisher('robot_speed', UInt16, queue_size=10)

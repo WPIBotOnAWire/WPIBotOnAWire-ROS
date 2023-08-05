@@ -12,6 +12,8 @@ class states(Enum):
     ROBOT_PATROL_FWD = 1
     ROBOT_APPROACH_FWD = 2
     ROBOT_DETERRENT_FWD = 3
+    
+state = states.ROBOT_IDLE
 
 state = states.ROBOT_IDLE
 
@@ -53,7 +55,12 @@ def main():
     rospy.init_node('wire_bot')
     rospy.Subscriber("/rangefinder/front/MB", UInt16, RangefinderFrontMB_CallBack)
 
+<<<<<<< HEAD
     rospy.spin()
+=======
+    while not rospy.is_shutdown():
+        rospy.spinOnce()
+>>>>>>> 00c70440af9b03e5980bd44804a5bf290032a199
 
 if __name__ == '__main__':
     main()

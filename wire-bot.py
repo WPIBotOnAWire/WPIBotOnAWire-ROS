@@ -21,6 +21,8 @@ def RangefinderFrontMB_CallBack(msg):
     global state
     distance = msg.data
     rospy.loginfo(rospy.get_caller_id() + "%i cm", distance)
+    
+    speed = 0
 
     if state == states.ROBOT_PATROL_FWD:
         if distance > 200:

@@ -13,9 +13,12 @@ class states(Enum):
     ROBOT_APPROACH_FWD = 2
     ROBOT_DETERRENT_FWD = 3
 
+state = states.ROBOT_IDLE
+
 pubRobotSpeed = rospy.Publisher('robot_speed', UInt16, queue_size=10)
 
 def RangefinderFrontMB_CallBack(msg):
+    global state
     distance = msg.data
     rospy.loginfo(rospy.get_caller_id() + "%i cm", distance)
 
@@ -40,6 +43,9 @@ def RangefinderFrontMB_CallBack(msg):
             state = states.ROBOT_PATROL_FWD
             speed = 100
 
+    else:
+        speed = 0
+
     pubRobotSpeed.publish(speed)
     rospy.loginfo("Speed -> %i cm/s", speed)
 
@@ -47,10 +53,7 @@ def main():
     rospy.init_node('wire_bot')
     rospy.Subscriber("/rangefinder/front/MB", UInt16, RangefinderFrontMB_CallBack)
 
-    state = states.ROBOT_IDLE
-
-    while not rospy.is_shutdown():
-        rospy.spinOnce()
+    rospy.spin()
 
 if __name__ == '__main__':
     main()

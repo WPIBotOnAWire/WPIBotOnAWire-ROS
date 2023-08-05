@@ -9,12 +9,9 @@ from std_msgs.msg import UInt16
 
 class states(Enum):
     ROBOT_IDLE = 0, 
-
     ROBOT_PATROL_FWD = 1
     ROBOT_APPROACH_FWD = 2
     ROBOT_DETERRENT_FWD = 3
-
-state = states.ROBOT_IDLE
 
 pubRobotSpeed = rospy.Publisher('robot_speed', UInt16, queue_size=10)
 
@@ -49,6 +46,8 @@ def RangefinderFrontMB_CallBack(msg):
 def main():
     rospy.init_node('wire_bot')
     rospy.Subscriber("/rangefinder/front/MB", UInt16, RangefinderFrontMB_CallBack)
+
+    state = states.ROBOT_IDLE
 
     while not rospy.is_shutdown():
         rospy.spinOnce()

@@ -20,7 +20,7 @@ pubRobotSpeed = rospy.Publisher('robot_speed', UInt16, queue_size=10)
 def RangefinderFrontMB_CallBack(msg):
     global state
     distance = msg.data
-    rospy.loginfo(rospy.get_caller_id() + "%i cm", distance)
+    rospy.loginfo(rospy.get_topic() + " %i cm", distance)
     
     speed = 0
 

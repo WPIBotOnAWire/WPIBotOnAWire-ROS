@@ -9,7 +9,7 @@ def EncoderCallback(msg):
     rospy.loginfo("Speed -> %i cm/s", speed)
 
 def main():
-    rospy.init_node('est-pos')
+    rospy.init_node('pos-est')
     rospy.Subscriber('robot_speed', Int16, EncoderCallback)
 
     rospy.spin()

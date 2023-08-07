@@ -4,6 +4,7 @@ from enum import Enum
 
 import rospy
 
+from std_msgs.msg import Int16
 from std_msgs.msg import UInt16
 #from sensor_msgs.msg import BatteryState
 
@@ -15,7 +16,7 @@ class states(Enum):
 
 state = states.ROBOT_IDLE
 
-pubRobotSpeed = rospy.Publisher('robot_speed', UInt16, queue_size=10)
+pubRobotSpeed = rospy.Publisher('target_speed', Int16, queue_size=10)
 
 def RangefinderFrontMB_CallBack(msg):
     global state

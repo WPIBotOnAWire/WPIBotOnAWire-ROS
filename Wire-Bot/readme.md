@@ -10,7 +10,7 @@ Manages the control of the robot.
 
 ## Messages
 ### In
-* sensor info from SAMD21 (see Arduino code for specifics)
+* sensor info from SAMD21 (see Arduino code for specifics; note that the current working branch is `samd21`).
 * TBD: classification data from CV module
 
 ### Out

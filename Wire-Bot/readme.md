@@ -1,11 +1,12 @@
 # Wire-Bot
 
 Manages the control of the robot.
+
 ## Functionality
 * Monitors sensor inputs do determine bird presence
-* Monitors battery state
-* Determines speed
+* Sets target speed
 * Engages deterrents
+* Monitors battery state
 
 ## Messages
 ### In

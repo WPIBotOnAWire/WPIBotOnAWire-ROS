@@ -21,7 +21,6 @@
   * Define message data: (bird/no bird); confidence; window (estimate distance?); count?
   * Test pipeline from camera to Nano
   * Add second camera
-* (Sri, w/Kunal and Greg): Perform basic test of sensors to check for basic reliability, useability. E.g., manually hold sensors on cable with and without bird model; check for false positives and negatives
-* (Sri, with Greg and Kunal): Rebuild ROS
+* (Puen, with Greg and Sri): Rebuild ROS
   * Generate structure, packages
   * Implement basic behavior on "desktop" version of robot

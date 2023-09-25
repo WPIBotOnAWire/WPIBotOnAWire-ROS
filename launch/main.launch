@@ -1,0 +1,3 @@
+<launch>
+	<node name="wire_bot" pkg="Wire-Bot" type="wire-bot.py" output="screen"/>
+</launch>

@@ -18,7 +18,8 @@ class states(Enum):
 
 pubTargetSpeed = rospy.Publisher('target_speed', Float32, queue_size=10)
 
-def RangefinderFrontMB_CallBack(msg):
+# rostopic pub -1 /rangefinder/front/MB std_msgs/UInt16 '210'
+def Distance_CallBack(msg):
 
     distance = msg.data
     rospy.loginfo("Front(MB): %i cm", distance)
@@ -68,7 +69,7 @@ def Activation_CallBack(msg):
     rospy.loginfo(command)
 
     global state
-    
+
     if command: 
         state = states.ROBOT_PATROL_FWD
         rospy.loginfo("State: " + state.name)
@@ -83,7 +84,7 @@ def main():
     state = states.ROBOT_IDLE
     rospy.loginfo("State: " + state.name)
 
-    rospy.Subscriber("/rangefinder/front/MB", UInt16, RangefinderFrontMB_CallBack)
+    rospy.Subscriber("distance", UInt16, Distance_CallBack)
     rospy.Subscriber("activation", Bool, Activation_CallBack)
 
     rospy.spin()

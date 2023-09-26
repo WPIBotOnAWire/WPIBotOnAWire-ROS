@@ -52,6 +52,7 @@ def RangefinderFrontMB_CallBack(msg):
 
     pubTargetSpeed.publish(speed)
     rospy.loginfo("Speed -> %i cm/s", speed)
+    rospy.loginfo("State: " + state.name)
 
 def main():
     rospy.init_node('wire_bot')

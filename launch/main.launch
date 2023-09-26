@@ -1,3 +1,6 @@
 <launch>
+	<node name="serial_node" pkg="rosserial_python" type="serial_node.py" output="screen">
+		<param name="port" value="/dev/ttyUSB0"/>
+	</node>
 	<node name="wire_bot" pkg="Wire-Bot" type="wire-bot.py" output="screen"/>
 </launch>

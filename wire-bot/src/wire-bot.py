@@ -32,34 +32,45 @@ def Front_Distance_CallBack(msg):
     global state
 
     if state == states.ROBOT_PATROL_FWD:
-        if distance > 200:
-            speed = 100
+
+        if distance > 200: speed = 100
+
         else:
+
             state = states.ROBOT_APPROACH_FWD
             rospy.loginfo("State: " + state.name)
             
     elif state == states.ROBOT_APPROACH_FWD:
+
         if distance > 200:
+
+            speed = 100
+
             state = states.ROBOT_PATROL_FWD
             rospy.loginfo("State: " + state.name)
-            speed = 100
-        elif distance > 50:
-            speed = (distance - 25)
+
+        elif distance > 50: speed = (distance - 25)
+
         else:
+
+            speed = 0
+
             state = states.ROBOT_DETERRENT_FWD
             rospy.loginfo("State: " + state.name)
-            speed = 0
+
             light_flash = 30
             pubFlashLight.publish(light_flash)
 
     elif state == states.ROBOT_DETERRENT_FWD:
+
         if distance > 200:
-            state = states.ROBOT_PATROL_FWD
-            rospy.loginfo("State: " + state.name)
+
             speed = 100
 
-    else:
-        speed = 0
+            state = states.ROBOT_PATROL_FWD
+            rospy.loginfo("State: " + state.name)
+
+    else: speed = 0
 
     pubTargetSpeed.publish(speed)
     rospy.loginfo("Speed -> %i cm/s", speed)
@@ -96,4 +107,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    

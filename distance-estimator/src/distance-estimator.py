@@ -23,7 +23,7 @@ def estimate_distance(distanceMB, distanceTF):
     elif distanceMB < 100: estimatedDistance = distanceTF
     else: estimatedDistance = (distanceMB + distanceTF) / 2
 
-    return estimatedDistance
+    return int(estimatedDistance)
 
 def RangefinderFrontMB_CallBack(msg):
 

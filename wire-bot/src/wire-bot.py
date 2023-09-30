@@ -17,9 +17,12 @@ class states(Enum):
     ROBOT_DETERRENT_FWD = 3
 
 pubTargetSpeed = rospy.Publisher('target_speed', Float32, queue_size=10)
+pubFlashLight = rospy.Publisher('led_cmd', UInt16, queue_size=10)
 
+# rosrun rosserial_python serial_node.py
+# rostopic pub -1 led_cmd std_msgs/UInt16 '20' 
 # rostopic pub -1 /rangefinder/front/MB std_msgs/UInt16 '210'
-def Distance_CallBack(msg):
+def Front_Distance_CallBack(msg):
 
     distance = msg.data
     rospy.loginfo("Front(MB): %i cm", distance)
@@ -46,6 +49,8 @@ def Distance_CallBack(msg):
             state = states.ROBOT_DETERRENT_FWD
             rospy.loginfo("State: " + state.name)
             speed = 0
+            light_flash = 30
+            pubFlashLight.publish(light_flash)
 
     elif state == states.ROBOT_DETERRENT_FWD:
         if distance > 200:
@@ -84,7 +89,7 @@ def main():
     state = states.ROBOT_IDLE
     rospy.loginfo("State: " + state.name)
 
-    rospy.Subscriber("distance", UInt16, Distance_CallBack)
+    rospy.Subscriber("/distance/front", UInt16, Front_Distance_CallBack)
     rospy.Subscriber("activation", Bool, Activation_CallBack)
 
     rospy.spin()

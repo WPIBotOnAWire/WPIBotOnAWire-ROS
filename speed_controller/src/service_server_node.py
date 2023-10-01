@@ -2,13 +2,12 @@
 
 import rospy
 
-wire_bot = __import__("Wire-Bot")
-#wire_bot = __import__("distance-estimator")
-#import speed_controller
 from speed_controller.srv import speed_control, speed_controlResponse
 
 def callback(request):
-    return speed_controlResponse(request.target_speed - request.current_speed)
+
+    speed = (request.target_speed + request.current_speed)/2
+    return speed_controlResponse(speed)
 
 def main():
     rospy.init_node("speed_control_service")

@@ -2,6 +2,8 @@
 
 from enum import Enum
 
+from speed_controller.srv import speed_control
+
 import rospy
 
 from std_msgs.msg import Float32
@@ -72,8 +74,10 @@ def Front_Distance_CallBack(msg):
 
     else: speed = 0
 
+    if speed != 0: speed = requestSpeedControl(speed, 50)
+
     pubTargetSpeed.publish(speed)
-    rospy.loginfo("Speed -> %i cm/s", speed)
+    rospy.loginfo("Controlled Speed -> %i cm/s", speed)
     rospy.loginfo("State: " + state.name)
 
 # use command below in the terminal to activate/deactivate
@@ -92,6 +96,20 @@ def Activation_CallBack(msg):
     else: 
         state = states.ROBOT_IDLE
         rospy.loginfo("State: " + state.name)
+
+def requestSpeedControl(targetSpeed, currentSpeed):
+
+    rospy.wait_for_service('speed_controlling')
+    
+    try:
+
+        speed_controlling = rospy.ServiceProxy('speed_controlling', speed_control)
+        controller = speed_controlling(targetSpeed,currentSpeed)
+
+        speed = controller.controlled_speed
+        return speed
+
+    except rospy.ServiceException as e: rospy.loginfo("Service call failed")
 
 def main():
     rospy.init_node('wire_bot')

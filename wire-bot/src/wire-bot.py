@@ -18,7 +18,7 @@ class states(Enum):
     ROBOT_APPROACH_FWD = 2
     ROBOT_DETERRENT_FWD = 3
 
-pubTargetSpeed = rospy.Publisher('target_speed', Float32, queue_size=10)
+pubTargetSpeed = rospy.Publisher('target_speed_meters_per_sec', Float32, queue_size=10)
 pubFlashLight = rospy.Publisher('led_cmd', UInt16, queue_size=10)
 
 # rosrun rosserial_python serial_node.py
@@ -29,13 +29,15 @@ def Front_Distance_CallBack(msg):
     distance = msg.data
     rospy.loginfo("Front(MB): %i cm", distance)
     
-    speed = 0
+    tarSpeed = 0
 
     global state
+    global currSpeed
+    global piControl
 
     if state == states.ROBOT_PATROL_FWD:
 
-        if distance > 200: speed = 100
+        if distance > 200: tarSpeed = 100
 
         else:
 
@@ -46,16 +48,16 @@ def Front_Distance_CallBack(msg):
 
         if distance > 200:
 
-            speed = 100
+            tarSpeed= 100
 
             state = states.ROBOT_PATROL_FWD
             rospy.loginfo("State: " + state.name)
 
-        elif distance > 50: speed = (distance - 25)
+        elif distance > 50: tarSpeed = (distance - 25)
 
         else:
 
-            speed = 0
+            tarSpeed = 0
 
             state = states.ROBOT_DETERRENT_FWD
             rospy.loginfo("State: " + state.name)
@@ -66,19 +68,23 @@ def Front_Distance_CallBack(msg):
 
         if distance > 200:
 
-            speed = 100
+            tarSpeed = 100
 
             state = states.ROBOT_PATROL_FWD
             rospy.loginfo("State: " + state.name)
 
             pubFlashLight.publish(0) # turn off LED
 
-    else: speed = 0
+    else: tarSpeed = 0
 
-    if speed != 0: speed = requestSpeedControl(speed, 50)
+    if tarSpeed != 0 and piControl: 
+        
+        tarSpeed = requestSpeedControl(tarSpeed, currSpeed)
 
-    pubTargetSpeed.publish(speed)
-    rospy.loginfo("Controlled Speed -> %i cm/s", speed)
+        piControl = False
+
+    pubTargetSpeed.publish(tarSpeed)
+    rospy.loginfo("Controlled Speed -> %i cm/s", tarSpeed)
     rospy.loginfo("State: " + state.name)
 
 # use command below in the terminal to activate/deactivate
@@ -97,6 +103,15 @@ def Activation_CallBack(msg):
     else: 
         state = states.ROBOT_IDLE
         rospy.loginfo("State: " + state.name)
+
+def Encoder_Callback(msg):
+
+    global currSpeed
+    global piControl
+    global piControl
+
+    currSpeed = msg.data
+    piControl = True
 
 def requestSpeedControl(targetSpeed, currentSpeed):
 
@@ -121,6 +136,7 @@ def main():
 
     rospy.Subscriber("/distance/fore", UInt16, Front_Distance_CallBack)
     rospy.Subscriber("activation", Bool, Activation_CallBack)
+    rospy.Subscriber("/encoder/meters_per_second", Float32, Encoder_Callback)
 
     rospy.spin()
 

@@ -60,8 +60,7 @@ def Front_Distance_CallBack(msg):
             state = states.ROBOT_DETERRENT_FWD
             rospy.loginfo("State: " + state.name)
 
-            light_flash = 30
-            pubFlashLight.publish(light_flash)
+            pubFlashLight.publish(1) # turn on LED
 
     elif state == states.ROBOT_DETERRENT_FWD:
 
@@ -71,6 +70,8 @@ def Front_Distance_CallBack(msg):
 
             state = states.ROBOT_PATROL_FWD
             rospy.loginfo("State: " + state.name)
+
+            pubFlashLight.publish(0) # turn off LED
 
     else: speed = 0
 
@@ -118,7 +119,7 @@ def main():
     state = states.ROBOT_IDLE
     rospy.loginfo("State: " + state.name)
 
-    rospy.Subscriber("/distance/front", UInt16, Front_Distance_CallBack)
+    rospy.Subscriber("/distance/fore", UInt16, Front_Distance_CallBack)
     rospy.Subscriber("activation", Bool, Activation_CallBack)
 
     rospy.spin()

@@ -4,7 +4,7 @@ import rospy
 
 from std_msgs.msg import UInt16
 
-pubFrontDistance = rospy.Publisher('/distance/front', UInt16, queue_size=10)
+pubFrontDistance = rospy.Publisher('/distance/fore', UInt16, queue_size=10)
 pubAftDistance = rospy.Publisher('/distance/aft', UInt16, queue_size=10)
 
 pubFront = False
@@ -66,7 +66,7 @@ def RangefinderAftTF_CallBack(msg):
 def main():
     rospy.init_node('distance_estimator')
 
-    rospy.Subscriber("/rangefinder/front/MB", UInt16, RangefinderFrontMB_CallBack)
+    rospy.Subscriber("/rangefinder/fore/MB", UInt16, RangefinderFrontMB_CallBack)
     rospy.Subscriber("/rangefinder/aft/MB", UInt16, RangefinderAftMB_CallBack)
     rospy.Subscriber("/rangefinder/fore/TF", UInt16, RangefinderFrontTF_CallBack)
     rospy.Subscriber("/rangefinder/aft/TF", UInt16, RangefinderAftTF_CallBack)

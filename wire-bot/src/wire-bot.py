@@ -10,13 +10,15 @@ from std_msgs.msg import Float32
 from std_msgs.msg import Int16
 from std_msgs.msg import UInt16
 from std_msgs.msg import Bool
+from std_msgs.msg import String
 #from sensor_msgs.msg import BatteryState
 
 class states(Enum):
     ROBOT_IDLE = 0, 
-    ROBOT_PATROL_FWD = 1
-    ROBOT_APPROACH_FWD = 2
-    ROBOT_DETERRENT_FWD = 3
+    ROBOT_PATROL_FWD = 1,
+    ROBOT_APPROACH_FWD = 2,
+    ROBOT_DETERRENT_FWD = 3,
+    ROBOT_MANUAL = 4
 
 pubTargetSpeed = rospy.Publisher('target_speed_meters_per_sec', Float32, queue_size=10)
 pubFlashLight = rospy.Publisher('led_cmd', UInt16, queue_size=10)
@@ -75,7 +77,7 @@ def Front_Distance_CallBack(msg):
 
             pubFlashLight.publish(0) # turn off LED
 
-    else: tarSpeed = 0
+    elif state == states.ROBOT_IDLE: tarSpeed = 0
 
     if tarSpeed != 0 and piControl: 
         
@@ -83,31 +85,42 @@ def Front_Distance_CallBack(msg):
 
         piControl = False
 
-    pubTargetSpeed.publish(tarSpeed)
-    rospy.loginfo("Controlled Speed -> %i cm/s", tarSpeed)
-    rospy.loginfo("State: " + state.name)
+    if state != states.ROBOT_MANUAL:
+        pubTargetSpeed.publish(tarSpeed)
+        rospy.loginfo("Controlled Speed -> %i cm/s", tarSpeed)
+        rospy.loginfo("State: " + state.name)
 
 # use command below in the terminal to activate/deactivate
-# rostopic pub -1 activation std_msgs/Bool 'true'
-def Activation_CallBack(msg):
+# rostopic pub -1 status std_msgs/String 'Start'
+def Command_CallBack(msg):
 
     command = msg.data
-    rospy.loginfo("Activation")
+    rospy.loginfo("Command: ")
     rospy.loginfo(command)
 
     global state
 
-    if command: 
+    if command == "Start": 
         state = states.ROBOT_PATROL_FWD
         rospy.loginfo("State: " + state.name)
-    else: 
+    elif command == "Stop": 
         state = states.ROBOT_IDLE
         rospy.loginfo("State: " + state.name)
+    elif command == "Emergency Stop": 
+        state = states.ROBOT_IDLE
+        rospy.loginfo("State: " + state.name)
+    elif command == "Forward": 
+        state = states.ROBOT_MANUAL
+        rospy.loginfo("State: " + state.name)
+        pubTargetSpeed.publish(100)
+    elif command == "Backward": 
+        state = states.ROBOT_MANUAL
+        rospy.loginfo("State: " + state.name)
+        pubTargetSpeed.publish(-100)
 
 def Encoder_Callback(msg):
 
     global currSpeed
-    global piControl
     global piControl
 
     currSpeed = msg.data
@@ -135,7 +148,7 @@ def main():
     rospy.loginfo("State: " + state.name)
 
     rospy.Subscriber("/distance/fore", UInt16, Front_Distance_CallBack)
-    rospy.Subscriber("activation", Bool, Activation_CallBack)
+    rospy.Subscriber("status", String, Command_CallBack)
     rospy.Subscriber("/encoder/meters_per_second", Float32, Encoder_Callback)
 
     rospy.spin()

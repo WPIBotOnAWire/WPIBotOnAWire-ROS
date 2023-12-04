@@ -4,6 +4,7 @@
 
 import rospy
 from std_msgs.msg import Bool
+from bird_detection.msg import Bird
 
 from ultralytics import YOLO
 import cv2
@@ -14,7 +15,7 @@ cap.set(3, 640)
 cap.set(4, 480)
 
 # Publishers
-pubBirdExistence = rospy.Publisher('/bird_detect', Bool, queue_size=10)
+pubBirdExistence = rospy.Publisher('/bird_detect', Bird, queue_size=10)
 
 # model
 model = YOLO("yolo-Weights/yolov8n.pt")
@@ -77,12 +78,20 @@ def detect():
         if findBird:
 
             rospy.loginfo("Detected bird")
-            pubBirdExistence.publish(True)    
+            msg = Bird()
+            msg.detectedBird = True
+            msg.bird_height = 0.0
+            msg.bird_width = 0.0
+            pubBirdExistence.publish(msg)    
 
         else: 
 
             rospy.loginfo("No bird")
-            pubBirdExistence.publish(False)   
+            msg = Bird()
+            msg.detectedBird = False
+            msg.bird_height = 0.0
+            msg.bird_width = 0.0
+            pubBirdExistence.publish(msg)   
 
         cv2.imshow('Webcam', img)
         if cv2.waitKey(1) == ord('q'):

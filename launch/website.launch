@@ -1,0 +1,6 @@
+<launch>
+	<node name="listener" pkg="website" type="web_sub.py" output="screen"/>
+    <node name="status_listener_node" pkg="website" type="status_sub.py" output="screen"/>
+    <node name="chatter" pkg="website" type="web_pub.py" output="screen"/>
+	<node name="wire_bot" pkg="Wire-Bot" type="wire-bot.py" output="screen"/>
+</launch>

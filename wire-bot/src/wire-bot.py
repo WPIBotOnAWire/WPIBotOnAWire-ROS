@@ -39,7 +39,7 @@ def Front_Distance_CallBack(msg):
 
     if state == states.ROBOT_PATROL_FWD:
 
-        if distance > 200: tarSpeed = 100
+        if distance > 200: tarSpeed = 10
 
         else:
 
@@ -50,12 +50,12 @@ def Front_Distance_CallBack(msg):
 
         if distance > 200:
 
-            tarSpeed= 100
+            tarSpeed = 10
 
             state = states.ROBOT_PATROL_FWD
             rospy.loginfo("State: " + state.name)
 
-        elif distance > 50: tarSpeed = (distance - 25)
+        elif distance > 50: tarSpeed = 5
 
         else:
 
@@ -70,7 +70,7 @@ def Front_Distance_CallBack(msg):
 
         if distance > 200:
 
-            tarSpeed = 100
+            tarSpeed = 10
 
             state = states.ROBOT_PATROL_FWD
             rospy.loginfo("State: " + state.name)
@@ -79,11 +79,11 @@ def Front_Distance_CallBack(msg):
 
     elif state == states.ROBOT_IDLE: tarSpeed = 0
 
-    if tarSpeed != 0 and piControl: 
+    # if tarSpeed != 0 and piControl: 
         
-        tarSpeed = requestSpeedControl(tarSpeed, currSpeed)
+    #     tarSpeed = requestSpeedControl(tarSpeed, currSpeed)
 
-        piControl = False
+    #     piControl = False
 
     if state != states.ROBOT_MANUAL:
         pubTargetSpeed.publish(tarSpeed)
@@ -100,23 +100,25 @@ def Command_CallBack(msg):
 
     global state
 
-    if command == "Start": 
+    if command == "Arm": 
         state = states.ROBOT_PATROL_FWD
         rospy.loginfo("State: " + state.name)
     elif command == "Stop": 
         state = states.ROBOT_IDLE
+        pubTargetSpeed.publish(0)
         rospy.loginfo("State: " + state.name)
     elif command == "Emergency Stop": 
         state = states.ROBOT_IDLE
+        pubTargetSpeed.publish(0)
         rospy.loginfo("State: " + state.name)
     elif command == "Forward": 
         state = states.ROBOT_MANUAL
         rospy.loginfo("State: " + state.name)
-        pubTargetSpeed.publish(100)
+        pubTargetSpeed.publish(10)
     elif command == "Backward": 
         state = states.ROBOT_MANUAL
         rospy.loginfo("State: " + state.name)
-        pubTargetSpeed.publish(-100)
+        pubTargetSpeed.publish(-10)
 
 def Encoder_Callback(msg):
 

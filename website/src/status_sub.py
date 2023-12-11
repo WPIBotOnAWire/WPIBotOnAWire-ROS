@@ -13,15 +13,21 @@ def status_listener():
 
     rate = rospy.Rate(1)
 
+    
+
     while not rospy.is_shutdown():
         try:
             response = requests.get(web_server_url)
 
+            global prevCommand
+            
             if response.status_code == 200:
                 data = response.json()
-                rospy.loginfo(f"Received status: {data['command']}")
 
-                pub.publish(data['command'])
+                if data['command'] != prevCommand:
+                    rospy.loginfo(f"Received status: {data['command']}")
+                    pub.publish(data['command'])
+                    prevCommand = data['command'] 
 
             else:
                 rospy.logwarn(f"Failed to retreive data. Status code: {response.status_code}")
@@ -33,6 +39,8 @@ def status_listener():
 
 if __name__ == '__main__':
     try:
+        global prevCommand
+        prevCommand = ''
         status_listener()
     except rospy.ROSInterruptException:
         pass

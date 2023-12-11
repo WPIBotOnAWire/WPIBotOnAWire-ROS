@@ -19,9 +19,10 @@ aftTFDistance = 0
 
 def estimate_distance(distanceMB, distanceTF):
 
-    if distanceMB > 200: estimatedDistance = distanceMB
-    elif distanceMB < 100: estimatedDistance = distanceTF
-    else: estimatedDistance = (distanceMB + distanceTF) / 2
+    estimatedDistance = distanceMB
+    # if distanceMB > 200: estimatedDistance = distanceMB
+    # elif distanceMB < 100: estimatedDistance = distanceTF
+    # else: estimatedDistance = (distanceMB + distanceTF) / 2
 
     return int(estimatedDistance)
 

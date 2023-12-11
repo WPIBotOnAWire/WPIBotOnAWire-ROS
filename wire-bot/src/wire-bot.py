@@ -34,12 +34,12 @@ def Front_Distance_CallBack(msg):
     tarSpeed = 0
 
     global state
-    global currSpeed
-    global piControl
+    # global currSpeed
+    # global piControl
 
     if state == states.ROBOT_PATROL_FWD:
 
-        if distance > 200: tarSpeed = 10
+        if distance > 200: tarSpeed = 30
 
         else:
 
@@ -50,12 +50,12 @@ def Front_Distance_CallBack(msg):
 
         if distance > 200:
 
-            tarSpeed = 10
+            tarSpeed = 30
 
             state = states.ROBOT_PATROL_FWD
             rospy.loginfo("State: " + state.name)
 
-        elif distance > 50: tarSpeed = 5
+        elif distance > 50: tarSpeed = 20 * distance / 200 + 10
 
         else:
 
@@ -70,7 +70,7 @@ def Front_Distance_CallBack(msg):
 
         if distance > 200:
 
-            tarSpeed = 10
+            tarSpeed = 30
 
             state = states.ROBOT_PATROL_FWD
             rospy.loginfo("State: " + state.name)
@@ -114,33 +114,33 @@ def Command_CallBack(msg):
     elif command == "Forward": 
         state = states.ROBOT_MANUAL
         rospy.loginfo("State: " + state.name)
-        pubTargetSpeed.publish(10)
+        pubTargetSpeed.publish(20)
     elif command == "Backward": 
         state = states.ROBOT_MANUAL
         rospy.loginfo("State: " + state.name)
-        pubTargetSpeed.publish(-10)
+        pubTargetSpeed.publish(-20)
 
-def Encoder_Callback(msg):
+# def Encoder_Callback(msg):
 
-    global currSpeed
-    global piControl
+#     global currSpeed
+#     global piControl
 
-    currSpeed = msg.data
-    piControl = True
+#     currSpeed = msg.data
+#     piControl = True
 
-def requestSpeedControl(targetSpeed, currentSpeed):
+# def requestSpeedControl(targetSpeed, currentSpeed):
 
-    rospy.wait_for_service('speed_controlling')
+#     rospy.wait_for_service('speed_controlling')
     
-    try:
+#     try:
 
-        speed_controlling = rospy.ServiceProxy('speed_controlling', speed_control)
-        controller = speed_controlling(targetSpeed,currentSpeed)
+#         speed_controlling = rospy.ServiceProxy('speed_controlling', speed_control)
+#         controller = speed_controlling(targetSpeed,currentSpeed)
 
-        speed = controller.controlled_speed
-        return speed
+#         speed = controller.controlled_speed
+#         return speed
 
-    except rospy.ServiceException as e: rospy.loginfo("Service call failed")
+#     except rospy.ServiceException as e: rospy.loginfo("Service call failed")
 
 def main():
     rospy.init_node('wire_bot')
@@ -151,7 +151,7 @@ def main():
 
     rospy.Subscriber("/distance/fore", UInt16, Front_Distance_CallBack)
     rospy.Subscriber("status", String, Command_CallBack)
-    rospy.Subscriber("/encoder/meters_per_second", Float32, Encoder_Callback)
+    # rospy.Subscriber("/encoder/meters_per_second", Float32, Encoder_Callback)
 
     rospy.spin()
 

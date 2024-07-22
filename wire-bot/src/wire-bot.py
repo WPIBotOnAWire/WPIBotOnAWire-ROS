@@ -91,7 +91,8 @@ def Front_Distance_CallBack(msg):
         rospy.loginfo("State: " + state.name)
 
 # use command below in the terminal to activate/deactivate
-# rostopic pub -1 status std_msgs/String 'Start'
+# rostopic pub -1 status std_msgs/String 'Arm'
+
 def Command_CallBack(msg):
 
     command = msg.data

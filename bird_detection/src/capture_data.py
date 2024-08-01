@@ -11,6 +11,8 @@ imagePath = "/home/boaw/bird_photos/"
 # Images will be saved as a png format, can easily be changed to a jpeg if needed
 imgType = ".png"
 
+camera = cv.VideoCapture(0)
+
 class image_capture_manager: 
     def __init__(self, topic, iCam): 
         # initialize the subscriber node now. 
@@ -43,7 +45,7 @@ class image_capture_manager:
         return name
     
     def save_image(self, hasBird):
-        result, image = self.camera.read()
+        result, image = camera.read()
         # name = self.create_filename(hasBird)
         name = imagePath + "test.png"
         cv.imwrite(filename = name, img = image)

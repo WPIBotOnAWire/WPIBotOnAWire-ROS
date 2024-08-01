@@ -14,16 +14,55 @@ frontCamera = cv.VideoCapture(0)
 foreIndex = 0 
 aftIndex = 0
 
-#Image path and naming schemes
-imagePath = "/home/boaw/bird_photos/"
-aftNameStem = "aft_img_"
-foreNameStem = "fore_img_"
+# #Image path and naming schemes
+# imagePath = "/home/boaw/bird_photos/"
+# #aftNameStem = "aft_img_"
+# #foreNameStem = "fore_img_"
 
-#Images will be saved as a png format, can easily be changed to a jpeg if needed
-imgType = ".png"
+# #Images will be saved as a png format, can easily be changed to a jpeg if needed
+# imgType = ".png"
 
 # Used to keep track of the last image so we don't save too many images
 lastImageTimeFore = 0
+
+class image_capture_manager: 
+    def __init__(self, topic, cam): 
+        # initialize the subscriber node now. 
+        self.distance_sub = rospy.Subscriber(topic, UInt16, self.distance_callback)
+        self.imagePath = "/home/boaw/bird_photos/"
+        self.imgType = ".png"
+        self.lastImageTime = 0
+        self.file_index = 0
+        self.camera_index = cam
+        
+    def callback(self, distance_msg):
+        distance = distance_msg.data
+        currentTime = rospy.get_time()
+
+        time_since_last_image = currentTime - self.lastImageTime
+        if distance < 200:
+            if time_since_last_image > 5:
+                self.save_image(True)
+                self.lastImageTime = currentTime
+        else:
+            if time_since_last_image > 20:
+                self.save_image(False)
+                self.lastImageTime = currentTime
+
+    def create_filename(self, hasBird):
+        name = self.imagePath + str(self.camera_index) + str(self.file_index) + str(hasBird) + self.imgType
+        rospy.loginfo(name)
+        self.file_index += 1
+        return name
+    
+    def save_image(self, hasBird):
+        result, image = self.camera.read()
+        name = self.create_filename(hasBird)
+        cv.imwrite(filename = name, img = image)
+
+
+
+
 
 def front_capture_callback(msg: UInt16):
     global lastImageTimeFore

@@ -19,7 +19,7 @@ class image_capture_manager:
         self.lastImageTime = 0
         self.file_index = 0
         self.camera_index = iCam
-        self.camera = cv.VideoCapture(iCam)
+        self.camera = cv.VideoCapture(0)
         
     def callback(self, distance_msg):
         distance = distance_msg.data

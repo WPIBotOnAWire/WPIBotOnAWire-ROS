@@ -26,7 +26,6 @@ imgType = ".png"
 lastImageTimeFore = 0
 
 def front_capture_callback(msg: UInt16):
-    #If we are more than 2 meters away from a bird, don't bother taking a picture
     global lastImageTimeFore
     global foreIndex
 
@@ -41,13 +40,13 @@ def front_capture_callback(msg: UInt16):
             lastImageTimeFore = currentTime
     
     else:
-        if currentTime - lastImageTime > 20:
+        if currentTime - lastImageTimeFore > 20:
             result, image = frontCamera.read()
             name = imagePath + foreNameStem + str(foreIndex) + "-nobird" + imgType
             foreIndex += 1
             cv.imwrite(filename = name, img = image)
             rospy.loginfo(name)
-            lastImageTime = currentTime
+            lastImageTimeFore = currentTime
     return
 
 def back_capture_callback(msg: UInt16):

@@ -5,23 +5,22 @@ from std_msgs.msg import UInt16
 import os
 import cv2 as cv
 
-# Image path and naming schemes
+# Image path
 imagePath = "/home/boaw/bird_photos/"
 
 # Images will be saved as a png format, can easily be changed to a jpeg if needed
 imgType = ".png"
 
-camera = cv.VideoCapture(0)
 
 class image_capture_manager: 
     def __init__(self, topic, iCam): 
         # initialize the subscriber node now. 
-        self.distance_sub = rospy.Subscriber(topic, UInt16, self.callback)
         self.imgType = ".png"
         self.lastImageTime = 0
         self.file_index = 0
         self.camera_index = iCam
         self.camera = cv.VideoCapture(iCam)
+        self.distance_sub = rospy.Subscriber(topic, UInt16, self.callback)
         
     def callback(self, distance_msg):
         distance = distance_msg.data
@@ -45,35 +44,10 @@ class image_capture_manager:
         return name
     
     def save_image(self, hasBird):
-        result, image = camera.read()
+        result, image = self.camera.read()
         name = self.create_filename(hasBird)
         cv.imwrite(filename = name, img = image)
 
-
-
-# def front_capture_callback(msg: UInt16):
-#     global lastImageTimeFore
-#     global foreIndex
-
-#     currentTime = rospy.get_time()
-#     if msg.data < 200:
-#         if currentTime - lastImageTimeFore > 5:
-#             result, image = frontCamera.read()
-#             name = imagePath + foreNameStem + str(foreIndex) + "-bird" + imgType
-#             foreIndex += 1
-#             cv.imwrite(filename=name, img=image)
-#             rospy.loginfo(name)
-#             lastImageTimeFore = currentTime
-    
-#     else:
-#         if currentTime - lastImageTimeFore > 20:
-#             result, image = frontCamera.read()
-#             name = imagePath + foreNameStem + str(foreIndex) + "-nobird" + imgType
-#             foreIndex += 1
-#             cv.imwrite(filename = name, img = image)
-#             rospy.loginfo(name)
-#             lastImageTimeFore = currentTime
-#     return
 
 
 def main():
@@ -83,6 +57,7 @@ def main():
 
     ## TODO: Make sure that these are the right cam ports for the front and the back
     front_camera = image_capture_manager("/distance/fore", 0)
+#    aft_camera = image_capture_manager("/distance/aft", 1)
 
     rospy.spin()
 

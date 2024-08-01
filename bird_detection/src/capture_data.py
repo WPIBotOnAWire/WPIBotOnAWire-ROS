@@ -38,7 +38,7 @@ class image_capture_manager:
                 self.lastImageTime = currentTime
 
     def create_filename(self, hasBird):
-        name = imagePath + str(self.camera_index) + "-" + str(self.file_index) + str(hasBird) + imgType
+        name = imagePath + str(self.camera_index) + "-" + str(self.file_index) + "-" + str(hasBird) + imgType
         rospy.loginfo(name)
         
         self.file_index += 1
@@ -47,7 +47,6 @@ class image_capture_manager:
     def save_image(self, hasBird):
         result, image = camera.read()
         name = self.create_filename(hasBird)
-        # name = imagePath + "test.png"
         cv.imwrite(filename = name, img = image)
 
 

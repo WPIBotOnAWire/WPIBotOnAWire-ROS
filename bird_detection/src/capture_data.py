@@ -5,25 +5,11 @@ from std_msgs.msg import UInt16
 import os
 import cv2 as cv
 
-## TODO: Make sure that these are the right cam ports for the front and the back
-## For now, camera 1 commented out for testing
-frontCamera = cv.VideoCapture(0)
-#backCamera = cv.VideoCapture(1)
-
-#Used to give each image a unique name
-foreIndex = 0 
-aftIndex = 0
-
 # #Image path and naming schemes
 imagePath = "/home/boaw/bird_photos/"
-# #aftNameStem = "aft_img_"
-# #foreNameStem = "fore_img_"
 
 # #Images will be saved as a png format, can easily be changed to a jpeg if needed
-# imgType = ".png"
-
-# Used to keep track of the last image so we don't save too many images
-lastImageTimeFore = 0
+imgType = ".png"
 
 class image_capture_manager: 
     def __init__(self, topic, cam): 
@@ -50,7 +36,7 @@ class image_capture_manager:
                 self.lastImageTime = currentTime
 
     def create_filename(self, hasBird):
-        name = imagePath + str(self.camera_index) + "-" + str(self.file_index) + str(hasBird) + self.imgType
+        name = imagePath + str(self.camera_index) + "-" + str(self.file_index) + str(hasBird) + imgType
         rospy.loginfo(name)
         self.file_index += 1
         return name
@@ -87,15 +73,14 @@ class image_capture_manager:
 #     return
 
 
-
 def main():
     if not os.path.exists(imagePath):
         os.mkdir(imagePath)
     rospy.init_node("capture_data")
 
+    ## TODO: Make sure that these are the right cam ports for the front and the back
     front_camera = image_capture_manager("/distance/fore", 0)
-#    rospy.Subscriber("/distance/fore", UInt16, front_capture_callback)
-#    rospy.Subscriber("/distance/aft", UInt16, back_capture_callback)
+
     rospy.spin()
 
 if __name__ == '__main__':

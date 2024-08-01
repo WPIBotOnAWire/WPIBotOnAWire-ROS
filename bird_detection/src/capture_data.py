@@ -14,7 +14,7 @@ imgType = ".png"
 class image_capture_manager: 
     def __init__(self, topic, iCam): 
         # initialize the subscriber node now. 
-        self.distance_sub = rospy.Subscriber(topic, UInt16, self.distance_callback)
+        self.distance_sub = rospy.Subscriber(topic, UInt16, self.callback)
         self.imgType = ".png"
         self.lastImageTime = 0
         self.file_index = 0

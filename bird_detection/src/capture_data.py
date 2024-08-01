@@ -19,7 +19,7 @@ class image_capture_manager:
         self.lastImageTime = 0
         self.file_index = 0
         self.camera_index = iCam
-        self.camera = cv.VideoCapture(0)
+        self.camera = cv.VideoCapture(iCam)
         
     def callback(self, distance_msg):
         distance = distance_msg.data
@@ -44,7 +44,8 @@ class image_capture_manager:
     
     def save_image(self, hasBird):
         result, image = self.camera.read()
-        name = self.create_filename(hasBird)
+        # name = self.create_filename(hasBird)
+        name = imagePath + "test.png"
         cv.imwrite(filename = name, img = image)
 
 

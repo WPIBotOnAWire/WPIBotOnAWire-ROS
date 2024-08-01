@@ -46,8 +46,8 @@ class image_capture_manager:
     
     def save_image(self, hasBird):
         result, image = camera.read()
-        # name = self.create_filename(hasBird)
-        name = imagePath + "test.png"
+        name = self.create_filename(hasBird)
+        # name = imagePath + "test.png"
         cv.imwrite(filename = name, img = image)
 
 

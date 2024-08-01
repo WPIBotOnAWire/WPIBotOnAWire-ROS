@@ -5,10 +5,10 @@ from std_msgs.msg import UInt16
 import os
 import cv2 as cv
 
-# #Image path and naming schemes
+# Image path and naming schemes
 imagePath = "/home/boaw/bird_photos/"
 
-# #Images will be saved as a png format, can easily be changed to a jpeg if needed
+# Images will be saved as a png format, can easily be changed to a jpeg if needed
 imgType = ".png"
 
 class image_capture_manager: 

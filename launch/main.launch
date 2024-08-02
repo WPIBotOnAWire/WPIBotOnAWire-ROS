@@ -6,6 +6,6 @@
    	<!-- <node name="status_listener_node" pkg="website" type="status_sub.py" output="screen"/> -->
    	<!-- <node name="chatter" pkg="website" type="web_pub.py" output="screen"/> -->
 	<!-- <node name="speed_control_service" pkg="speed_controller" type="service_server_node.py" output="screen"/> -->
-	<node name="distance_estimator" pkg="distance-estimator" type="distance-estimator.py" output="screen"/>
-	<node name="wire_bot" pkg="Wire-Bot" type="wire-bot.py" output="screen"/>
+	<node name="distance_estimator" pkg="distance-estimator" type="distance-estimator.py" output="screen"/></node>
+	<node name="wire_bot" pkg="Wire-Bot" type="wire-bot.py" output="screen"/></node>
 </launch>

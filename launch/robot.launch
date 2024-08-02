@@ -5,6 +5,6 @@
   </node>
   <node name="distance_estimator" pkg="distance_estimator" type="distrance-estimator.py"></node>  
   <node name="capture_data" pkg="bird_detection" type="capture_data.py"></node>
-  <node name="sound_node" pkg="sound_node" type="play.py"/>
-  <node pkg="rostopic" type="rostopic" name="rostopic_node" args="pub /robot_state std_msgs/String 'data: &quot;Connected - No State&quot;'" output="screen"/>
+  <node name="sound_node" pkg="sound_node" type="play.py"/></node>
+  <node pkg="rostopic" type="rostopic" name="rostopic_node" args="pub /robot_state std_msgs/String 'data: &quot;Connected - No State&quot;'" output="screen"/></node>
 </launch>

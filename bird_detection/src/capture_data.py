@@ -29,23 +29,23 @@ class image_capture_manager:
         time_since_last_image = currentTime - self.lastImageTime
         if distance < 200:
             if time_since_last_image > 5:
-                self.save_image(True)
+                self.save_image(distance)
                 self.lastImageTime = currentTime
         else:
             if time_since_last_image > 20:
-                self.save_image(False)
+                self.save_image(distance)
                 self.lastImageTime = currentTime
 
-    def create_filename(self, hasBird):
-        name = imagePath + str(self.camera_index) + "-" + str(self.file_index) + "-" + str(hasBird) + imgType
+    def create_filename(self, distance):
+        name = imagePath + str(self.camera_index) + "-" + str(self.file_index) + "-" + str(distance) + imgType
         rospy.loginfo(name)
         
         self.file_index += 1
         return name
     
-    def save_image(self, hasBird):
+    def save_image(self, distance):
         result, image = self.camera.read()
-        name = self.create_filename(hasBird)
+        name = self.create_filename(distance)
         cv.imwrite(filename = name, img = image)
 
 

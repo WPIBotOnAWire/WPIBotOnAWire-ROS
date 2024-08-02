@@ -39,8 +39,6 @@ def RangefinderFrontMB_CallBack(msg):
 
 #    newMBForeReading = True
     frontMBDistance = msg.data
-        
-    rospy.loginfo("Front(MB): %i cm", frontMBDistance)
 
 #    if newTFForeReading:
     estDist = frontMBDistance # estimate_distance(frontMBDistance, frontTFDistance, True)

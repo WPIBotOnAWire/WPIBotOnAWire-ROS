@@ -4,6 +4,8 @@ import rospy
 
 from std_msgs.msg import UInt16
 
+KAPPA = 0.1
+
 class distance_estimator:
     def __init__(self, mb_topic, tf_topic, pub_topic):
         self.distance_estimate = 1000
@@ -13,7 +15,10 @@ class distance_estimator:
 
     def mb_callback(self, mb_msg):
         distance = mb_msg.data
-        self.distance_estimate = distance
+        if distance < self.distance_estimate: # if MB reads closer, take that
+            self.distance_estimate = distance
+        if distance > self.distance_estimate: # if farther, 'fuse' by weighting
+            self.distance_estimate = KAPPA * distance + (1 - KAPPA) * self.distance_estimate
         self.distance_pub.publish(self.distance_estimate)
 
     def tf_callback(self, tf_msg):
@@ -23,7 +28,6 @@ class distance_estimator:
         self.distance_pub.publish(self.distance_estimate)
 
         
-
 def main():
     rospy.init_node('distance_estimator')
 

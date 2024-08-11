@@ -15,7 +15,6 @@ imgType = ".png"
 class image_capture_manager: 
     def __init__(self, topic, iCam): 
         # initialize the subscriber node now. 
-        self.imgType = ".png"
         self.lastImageTime = 0
         self.file_index = 0
         self.camera_index = iCam

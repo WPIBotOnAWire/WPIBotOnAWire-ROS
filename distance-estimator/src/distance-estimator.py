@@ -17,7 +17,11 @@ class distance_estimator:
         self.distance_pub.publish(self.distance_estimate)
 
     def tf_callback(self, tf_msg):
-        pass
+        distance = tf_msg.data
+        if distance < self.distance_estimate: # if TF reads closer, take that
+            self.distance_estimate = distance
+        self.distance_pub.publish(self.distance_estimate)
+
         
 
 def main():

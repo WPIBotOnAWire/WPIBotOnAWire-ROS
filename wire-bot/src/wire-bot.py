@@ -6,7 +6,10 @@ from std_msgs.msg import Int16
 from std_msgs.msg import UInt16
 from std_msgs.msg import String
 
-def Front_Distance_CallBack(msg):
+def Fore_Distance_CallBack(msg):
+    pass
+
+def Aft_Distance_CallBack(msg):
     pass
 
 def Command_CallBack(msg):
@@ -18,7 +21,9 @@ def Command_CallBack(msg):
 def main():
     rospy.init_node('wire_bot')
 
-    rospy.Subscriber("/distance/fore", UInt16, Front_Distance_CallBack)
+    rospy.Subscriber("/distance/fore", UInt16, Fore_Distance_CallBack)
+    rospy.Subscriber("/distance/aft", UInt16, Aft_Distance_CallBack)
+    
     rospy.Subscriber("status", String, Command_CallBack)
 
     rospy.spin()

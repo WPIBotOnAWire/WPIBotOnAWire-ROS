@@ -14,7 +14,7 @@ class distance_estimator:
     def mb_callback(self, mb_msg):
         distance = mb_msg.data
         self.distance_estimate = distance
-        self.distance_pub.Publish(self.distance_estimate)
+        self.distance_pub.publish(self.distance_estimate)
 
     def tf_callback(self, tf_msg):
         pass

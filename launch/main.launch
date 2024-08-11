@@ -3,5 +3,5 @@
 		<param name="port" value="/dev/ttyUSB0"/>
 	</node>
 	<node name="wire_bot" pkg="Wire-Bot" type="wire-bot.py" output="screen"/>
-	<node name="distance_estimator" pkg="distance_estimator" type="distance-estimator.py"/>
+	<node name="distance_estimator" pkg="distance-estimator" type="distance-estimator.py"/>
 </launch>

@@ -14,7 +14,7 @@ class distance_estimator:
         self.distance_pub = rospy.Publisher(pub_topic, UInt16, queue_size=10)
 
     def mb_callback(self, mb_msg):
-        distance = mb_msg.data
+        distance = mb_msg.data - 10 # subtract 10 cm for offset b/w the two sensors
         if distance < self.distance_estimate: # if MB reads closer, take that
             self.distance_estimate = distance
         if distance > self.distance_estimate: # if farther, 'fuse' by weighting

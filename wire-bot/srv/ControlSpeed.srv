@@ -1,4 +1,0 @@
-float32 target_speed
-int16 current_speed
----
-int16 controlled_speed

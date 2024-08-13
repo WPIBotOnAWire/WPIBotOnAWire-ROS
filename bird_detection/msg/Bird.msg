@@ -1,3 +1,0 @@
-bool detectedBird
-float32 bird_height
-float32 bird_width
